@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        Adds assets
+        <template id="asset_background" name="background asset" inherit_id="web.asset_background">
+            <xpath expr="." position="inside">
+
+            </xpath>
+        </template>
+    </data>
+</odoo>

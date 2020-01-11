@@ -1,0 +1,997 @@
+<!--[En los comentarios la ortografia es nula porque tengo el layout del teclado en ingles y porque no se escribir]
+-Se organiza por modelos y dentro sus tipos de record
+-Los nombres de los modelos estan en castellano para porder realizar una busqueda facil; por orden son:
+    Jugador
+    Planeta
+    Evento
+    Alianza
+    Ciudadano
+    Mapa
+    Construcciones (Energia, Pobacion, Ataque, Defensa)
+    -->
+                  <odoo>
+              <data>
+                    <!---/////////////////////  Jugador  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-->
+                                            <!--Action Window-->
+    <record model="ir.actions.act_window" id="proves.action_player_window">
+<field name="name">Players</field>
+<field name="res_model">proves.player</field>
+<field name="view_mode">tree,form,kanban</field>
+    </record>
+                                            <!--Tree-->
+<record model="ir.ui.view" id="proves.players_list">
+      <field name="name">players list</field>
+      <field name="model">proves.player</field>
+      <field name="arch" type="xml">
+  <tree decoration-success="prestige=='4'" decoration-muted="prestige=='2'" decoration-primary="prestige=='5'"
+        decoration-warning="prestige=='6'" decoration-info="prestige=='3'" decoration-danger="prestige=='1'"
+        decoration-bf="prestige=='6'" decoration-it="prestige=='6'">
+<field name="name"/>
+<field name="worlds_owner" widget="many2many_tags"/>
+<field name="prestige" widget="priority"/>
+<field string="Aliance" name="belongs_aliance"/>
+  </tree>
+      </field>
+          </record>
+                                            <!--Form-->
+<record model="ir.ui.view" id="proves.player_form">
+  <field name="name">player form</field>
+  <field name="model">proves.player</field>
+  <field name="arch" type="xml">
+      <form>
+          <sheet>
+              <group>
+                  <group string="Player">
+                      <field name="name"/>
+                      <field name="image" widget="image" style="width:100px;"/>
+                  </group>
+                  <group string="Info">
+                      <field name="prestige" widget="priority"/>
+                      <field name="belongs_aliance" string="Aliance member"/>
+                  </group>
+              </group>
+              <notebook>
+                  <page string="Production"  >
+                      <field name="worlds_owner">
+                          <kanban>
+                              <field name="name"/>
+                              <field name="id"/>
+                              <templates>
+                                  <t t-name="kanban-box">
+                                      <div class="oe_product_card  oe_kanban_global_click">
+
+                                          <tree>
+                                              <!--field name="image_small" widget="image" style="width:16px"/-->
+                                              <h4>
+                                                  <field name="image_small" widget="image"/>
+                                                  <field name="name"/>
+                                              </h4>
+                                              <table border="8">
+                                                  <tr>
+                                                      <th  style="background-color:rgba(127, 235, 137, 30);">
+                                                          Energy
+                                                          <field name="perc_energy" widget="progressbar"/>
+                                                          Energy per minute:
+                                                          <field name="energy_xm"/>
+                                                      </th>
+                                                      <th style="background-color:rgba(235, 127, 198, 30);">
+                                                           Population
+                                                          <field name="perc_population" widget="progressbar"/>
+                                                          Births per minute:
+                                                          <field name="births_xm"/>
+                                                      </th>
+                                                  </tr>
+                                                  <tr>
+                                                      <th style="background-color:rgba(255, 99, 71, 30);">
+                                                          Power attack
+                                                          <field name="perc_power_attack" widget="progressbar"/>
+                                                          Power attack per minute:
+                                                          <field name="power_attack_xm"/>
+                                                      </th>
+                                                      <th style="background-color:rgba(60, 159, 216, 30);">
+                                                           Power defense
+                                                          <field name="perc_power_defense" widget="progressbar"/>
+                                                          Power defense per minute:
+                                                          <field name="power_defense_xm"/>
+                                                      </th>
+                                                  </tr>
+                                                  </table>
+                                          </tree>
+                                      </div>
+                                  </t>
+                              </templates>
+                          </kanban>
+                      </field>
+                  </page>
+
+                  <page string="Planets Owner Info">
+                      <button name="create_new_world" type="object" string="Create New World"
+                                        class="oe_highlight"/>
+                      <field name="worlds_owners">
+                          <kanban>
+                              <field name="name"/>
+                              <field name="id"/>
+                              <templates>
+                                  <t t-name="kanban-box">
+                                      <div class="oe_product_card">
+                                          <tree>
+                                              <h4>
+                                                  <field name="name"/>
+                                              </h4>
+                                              <field name="image" widget="image"/>
+                                              <table border="0"  padding="95">
+                                                  <caption>Structures</caption>
+                                                  <tr>
+                                                      <td style="padding:10px" align="center" >
+                                                          <button
+                                                              class="oe_stat_button"
+                                                              type="action"
+                                                              style="background-color:rgba(60, 159, 216, 30);"
+                                                              name="%(action_defense_dome_window)d"
+                                                              icon="fa-book">
+                                                              <field name="defense_dome" widget="statinfo"/>
+                                                          </button>
+                                                      </td>
+                                                      <td style="padding:10px" align="center">
+                                                          <button
+                                                              class="oe_stat_button"
+                                                              type="action"
+                                                               style="background-color:rgba(255, 99, 71, 30);"
+                                                              name="%(action_attack_tower_window)d"
+                                                              icon="fa-book">
+                                                              <field name="attack_towers" widget="statinfo"/>
+                                                          </button>
+                                                      </td>
+                                                  </tr>
+                                                  <tr>
+                                                      <td style="padding:10px" align="center">
+                                                          <button
+                                                              class="oe_stat_button"
+                                                              type="action"
+                                                               style="background-color:rgba(235, 127, 198, 30);"
+                                                              name="%(action_nursery_window)d"
+                                                              icon="fa-book">
+                                                              <field name="nursery" widget="statinfo"/>
+                                                          </button>
+                                                      </td>
+                                                      <td style="padding:10px" align="center">
+                                                          <button
+                                                              class="oe_stat_button"
+                                                              type="action"
+                                                               style="background-color:rgba(127, 235, 137, 30);"
+                                                              name="%(action_power_station_window)d"
+                                                              >
+                                                              <field name="power_stations" widget="statinfo"/>
+                                                          </button>
+                                                      </td>
+                                                  </tr>
+                                                  </table>
+                                               <h8>Population:
+                                              </h8>
+                                              <field name="population"/>
+                                          </tree>
+                                      </div>
+                                  </t>
+                              </templates>
+                          </kanban>
+                      </field>
+                  </page>
+                  <page string="Events list">
+                      <tree>
+                          <field name="events"/>
+                      </tree>
+                  </page>
+              </notebook>
+          </sheet>
+      </form>
+  </field>
+</record>
+                                            <!--Kanban-->
+<record id="proves.player_kanban" model="ir.ui.view">
+    <field name="name">Player kanabn</field>
+    <field name="model">proves.player</field>
+    <field name="arch" type="xml">
+        <kanban>
+            <templates>
+                <t t-name="kanban-box">
+                    <li t-if="record.name.raw_value">
+                        <center>
+                        <H3><field name="name"/></H3>
+                        <field name="prestige" widget="priority"/><BR/><BR/>
+                        <field widget="image" name="image_small"/><BR/><BR/>
+                            Aliance:
+                         <field name="belongs_aliance"/>
+                        </center><BR/>
+                        Worlds Owner:
+                        <field name="worlds_owners" widget="many2many_tags"/><BR/>
+                        Events:
+                        <field name="events" widget="many2many_tags"/>
+                    </li>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
+                     <!---/////////////////////  Planeta  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-->
+
+                                            <!--Action Window-->
+    <record model="ir.actions.act_window" id="proves.action_world_window">
+<field name="name">Planets</field>
+<field name="res_model">proves.world</field>
+<field name="view_mode">tree,form,kanban</field>
+    </record>
+                                            <!--Tree-->
+          <record model="ir.ui.view" id="proves.wolds_list">
+      <field name="name">worlds list</field>
+      <field name="model">proves.world</field>
+      <field name="arch" type="xml">
+  <tree>
+<field name="name"/>
+<field name="owner"/>
+<field name="lvl"/>
+<field name="structures"/>
+<field name="population"/>
+<field name="space_pos"/>
+  </tree>
+      </field>
+          </record>
+                                            <!--Form-->
+<record model="ir.ui.view" id="proves.world_form">
+    <field name="name">world form</field>
+    <field name="model">proves.world</field>
+    <field name="arch" type="xml">
+        <form>
+            <header>
+                 <button name="create_resources" type="object" string="Update Productions"
+                              class="oe_highlight"/>
+                <field name="name"/>
+            </header>
+            <sheet>
+                 <button name="owner" type="action" class="oe_stat_button" icon="fa-star">
+                             <p>Player</p>
+                            <field name="owner"/>
+                        </button>
+                  <button name="player" type="action" class="oe_stat_button" icon="fa-gear">
+                             <p>Total structures</p>
+                            <field name="structures"/>
+                        </button>
+                <button name="population" type="action" class="oe_stat_button" icon="fa-bug">
+                             <p>Population</p>
+                            <field name="population"/>
+                        </button>
+              <group>
+                  <group string="Planet">
+                      <field name="image" widget="image" style="width:300px;"/>
+                      <field name="tiles" invisible="'product_id' not in context"/>
+                      <field name="free_tiles" widget="gauge" style="width:150px; height: 80px; cursor: pointer;" options="{'max_field': 'tiles'}"></field>
+                  </group>
+                  <group string="Info from within">
+                      <field name="max_energy" invisible="'product_id' not in context"/>
+                      <field name="max_power_attack" invisible="'product_id' not in context"/>
+                      <field name="max_power_defense" invisible="'product_id' not in context"/>
+                      <field name="total_energy" widget="gauge" style="width:150px; height: 80px; cursor: pointer;" options="{'max_field': 'max_energy'}"></field>
+                      <field name="power_attack" widget="gauge" style="width:150px; height: 80px; cursor: pointer;" options="{'max_field': 'max_power_attack'}"></field>
+                      <field name="power_defense" widget="gauge" style="width:150px; height: 80px; cursor: pointer;" options="{'max_field': 'max_power_defense'}"></field>
+                  </group>
+              </group>
+                <notebook>
+                    <page string="Management">
+                        <notebook>
+                          <!--page string="Proves: Condicionals en la Vista">
+                              <button name="create_new_power_station" type="object" string="Create a Energy structure"
+                                      class="oe_highlight"/>
+                              <field name="battle">
+                                  <kanban>
+                                      <field name="name"/>
+                                      <field name="id"/>
+                                      <templates>
+                                              <t t-name="kanban-box">
+                                              <div class="oe_product_card">
+                                                  <tree>
+                                                      <h4>
+                                                          <field name="name"/>
+                                                      </h4>
+                                                      <field name="max_capacity" />
+                                                      <field name="perc_complete" widget="progressbar" attrs="{'invisible':[('kanban_state','in',['blocked'])]}"/>
+                                                      <field  name="kanban_state" widget="statusbar"/>
+                                                      Level:
+                                                      <field name="lvl"/>
+                                                      <button name="create_new_power_station" type="object" class="oe_highlight">Level UP</button>
+                                                  </tree>
+                                              </div>
+                                          </t>
+                                      </templates>
+                                  </kanban>
+                              </field>
+                          </page-->
+                           <page string="Power Plants">
+                              <button name="create_new_power_station" type="object" string="Create a Energy structure"
+                                      class="oe_highlight"/>
+                              <field name="power_stations">
+                                  <kanban>
+                                      <field name="name"/>
+                                      <field name="id"/>
+                                      <field name="max_energy"/>
+                                      <templates>
+                                          <t t-name="kanban-box">
+                                              <div class="oe_product_card">
+                                                  <tree>
+                                                      <h4>
+                                                          <field name="name"/>
+                                                      </h4>
+                                                      <div  attrs="{'invisible':[('kanban_state','!=','start')]}">
+                                                           <field name="perc_complete" widget="percentpie"/>
+                                                      </div>
+                                                      <div  attrs="{'invisible':[('kanban_state','=','start')]}">
+                                                          <field name="energy" widget="gauge" style="width:50px; height: 40px; cursor: pointer;" options="{'max_field': 'max_energy'}"/>
+                                                          Level:
+                                                          <field name="lvl"/>
+                                                      </div>
+                                                      <field name="workers" widget="many2many_tags"/>
+                                                      <field name="kanban_state" widget="statusbar"/>
+                                                  </tree>
+                                              </div>
+                                          </t>
+                                      </templates>
+                                  </kanban>
+                              </field>
+                          </page>
+                          <page string="Sleeping Buildings">
+                              <button name="create_new_nursery" type="object" string="Create a Commune structure"
+                                                class="oe_highlight"/>
+                              <field name="nursery">
+                                  <kanban>
+                                      <field name="name"/>
+                                      <field name="id"/>
+                                      <field name="built_in"/>
+                                      <templates>
+                                          <t t-name="kanban-box">
+                                              <div class="oe_product_card">
+                                                  <tree>
+                                                      <h4>
+                                                          <field name="name"/>
+                                                      </h4>
+                                                      <div  attrs="{'invisible':[('kanban_state','!=','start')]}">
+                                                           <field name="perc_complete" widget="percentpie"/>
+                                                      </div>
+                                                      <div  attrs="{'invisible':[('kanban_state','=','start')]}">
+                                                          <field name="residents" widget="gauge" style="width:50px; height: 40px; cursor: pointer;" options="{'max_field': 'capacity'}"/>
+                                                          Level:
+                                                          <field name="lvl"/>
+                                                      </div>
+                                                      <field name="kanban_state" widget="statusbar"/>
+                                                  </tree>
+                                              </div>
+                                          </t>
+                                      </templates>
+                                  </kanban>
+                              </field>
+                          </page>
+                            <page string="Defense Buildings">
+                                <button name="create_new_defense_dome" type="object" string="Create a Defense structure"
+                                                class="oe_highlight"/>
+                              <field name="defense_dome">
+                                  <kanban>
+                                      <field name="name"/>
+                                      <field name="id"/>
+                                      <field name="max_buckler"/>
+                                      <templates>
+                                          <t t-name="kanban-box">
+                                              <div class="oe_product_card">
+                                                      <tree>
+                                                           <h4>
+                                                              <field name="name"/>
+                                                          </h4>
+                                                          <div  attrs="{'invisible':[('kanban_state','!=','start')]}">
+                                                               <field name="perc_complete" widget="percentpie"/>
+                                                          </div>
+                                                          <div  attrs="{'invisible':[('kanban_state','=','start')]}">
+                                                              <field name="buckler" widget="gauge" style="width:50px; height: 40px; cursor: pointer;" options="{'max_field': 'max_buckler'}"/>
+                                                              Level:
+                                                              <field name="lvl"/>
+                                                          </div>
+                                                          <field name="kanban_state" widget="statusbar"/>
+                                                      </tree>
+
+                                              </div>
+                                          </t>
+                                      </templates>
+                                  </kanban>
+                              </field>
+                          </page>
+                           <page string="Attack Buildings">
+                             <button name="create_new_attack_tower" type="object" string="Create an Attack structure"
+                                class="oe_highlight"/>
+                             <field name="attack_towers">
+                                <kanban>
+                                    <field name="name"/>
+                                    <field name="id"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_product_card">
+                                                <tree>
+                                                      <h4>
+                                                         <field name="name"/>
+                                                      </h4>
+                                                      <div  attrs="{'invisible':[('kanban_state','!=','start')]}">
+                                                      <field name="perc_complete" widget="percentpie"/>
+                                                      </div>
+                                                      <div  attrs="{'invisible':[('kanban_state','=','start')]}">
+                                                        <field name="damage" widget="gauge" style="width:50px; height: 40px; cursor: pointer;" options="{'max_field': 'max_damage'}"/>
+                                                        Level:
+                                                        <field name="lvl"/>
+                                                      </div>
+                                                      <field name="kanban_state" widget="statusbar"/>
+                                                </tree>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                          </page>
+                             <page string="Citizens">
+                             <field name="residents">
+                                <kanban>
+                                    <field name="name"/>
+                                    <field name="id"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_product_card">
+                                                <tree>
+                                                    <h4>
+                                                        <field name="name"/>
+                                                    </h4>
+                                                    Inteligence:
+                                                    <field name="inteligence"/>
+                                                    Force:
+                                                    <field name="force"/>
+                                                    Ability:
+                                                    <field name="ability"/>
+                                                    <field name="life_expectacy" widget="progressbar"/>
+                                                </tree>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                          </page>
+                        </notebook>
+                    </page>
+                    <page string="War">
+                        <tree>
+                            <group>
+                                <tree>
+                                     Ganadas/Perdidas/Total...
+                                     <button name="%(action_battle_window)d" type="action" string="New battle" context="{'default_attack':active_id}"/>
+                                </tree>
+                            </group>
+                        </tree>
+                        <notebook>
+                           <page string="Battles fought">
+                              <field name="defender">
+                                  <kanban>
+                                      <field name="name"/>
+                                      <field name="id"/>
+                                      <templates>
+                                              <t t-name="kanban-box">
+                                              <div class="oe_product_card">
+                                                  <tree>
+                                                      <h4>
+                                                          <field name="name"/>
+                                                      </h4>
+                                                      Declared to:
+                                                      <field name="attack" />
+                                                      <field name="attacker"/>
+
+                                                      Duration:
+                                                      <field name="start_date"/>
+                                                      <field name="end_date"/>
+                                                      Finished:
+                                                      <field name="finished" widget="checkbox"/>
+                                                  </tree>
+                                              </div>
+                                          </t>
+                                      </templates>
+                                  </kanban>
+                              </field>
+                          </page>
+                            <page string="Battles undertaken">
+                              <field name="attacker">
+                                  <kanban>
+                                      <field name="name"/>
+                                      <field name="id"/>
+                                      <templates>
+                                              <t t-name="kanban-box">
+                                              <div class="oe_product_card">
+                                                  <tree>
+                                                      <h4>
+                                                          <field name="name"/>
+                                                      </h4>
+                                                      Declared for:
+                                                      <field name="defender"/>
+                                                      <field name="defend"/>
+                                                      Duration:
+                                                      <field name="start_date"/>
+                                                      <field name="end_date"/>
+                                                      Finished:
+                                                      <field name="finished" widget="checkbox"/>
+                                                  </tree>
+                                              </div>
+                                          </t>
+                                      </templates>
+                                  </kanban>
+                              </field>
+                          </page>
+                        </notebook>
+                    </page>
+                </notebook>
+              <!--footer>
+                  <button name="reset_player" type="object" string="Reset" class="oe_highlight"/>
+              </footer-->
+          </sheet>
+      </form>
+  </field>
+</record>
+                                            <!--Kanban-->
+<record id="proves.world_kanban" model="ir.ui.view">
+    <field name="name">World kanabn</field>
+    <field name="model">proves.world</field>
+    <field name="priority">90</field>
+    <field name="arch" type="xml">
+        <kanban>
+            <templates>
+                <t t-name="kanban-box">
+                    <div>
+                        <li t-if="record.name.raw_value">
+                            <field name="name"/>
+                            from
+                            <field name="owner"/>
+                            <H6 align="right"> Level:
+                                <field name="lvl" align="right"/>
+                            </H6>
+                            <field widget="image" name="image"/>
+                            <field name="tiles" invisible="'product_id' not in context"/>
+                            <field name="free_tiles" widget="gauge" options="{'max_field': 'tiles'}"/>
+                            <HR width="20%"/>
+                            Births/minute:
+                            <field name="births_xm"/>
+                            <BR/>
+                            Power Plants:
+                            <field name="power_stations" widget="many2many_tags"/>
+                            Hatcheries:
+                            <field name="nursery" widget="many2many_tags"/>
+                            Offensive:
+                            <field name="attack_towers" widget="many2many_tags"/>
+                            Defensive:
+                            <field name="defense_dome" widget="many2many_tags"/>
+                        </li>
+                    </div>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
+
+                     <!---/////////////////////  Evento  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-->
+                                            <!--Action Window-->
+    <record model="ir.actions.act_window" id="proves.action_events_window">
+<field name="name">Events</field>
+<field name="res_model">proves.event</field>
+<field name="view_mode">calendar,tree,form,kanban</field>
+    </record>
+                                            <!--Tree-->
+           <record model="ir.ui.view" id="proves.events_list">
+      <field name="name">Events list</field>
+      <field name="model">proves.event</field>
+      <field name="arch" type="xml">
+  <tree>
+<field name="name"/>
+<field name="tipe_event" widget="statusbar"/>
+<field name="player_inc" widget="many2many_tags"/>
+<field name="date"/>
+<field name="end_date"/>
+  </tree>
+      </field>
+          </record>
+                                            <!--Form-->
+<record model="ir.ui.view" id="proves.event_form">
+  <field name="name">Event form</field>
+  <field name="model">proves.event</field>
+  <field name="arch" type="xml">
+      <form>
+           <sheet>
+              <group>
+                  <group string="Event">
+                      <field name="name"/>
+                      <field string="Participants" name="player_inc" widget="many2many_tags"/>
+                      <field name="tipe_event"/>
+                  </group>
+                  <group string="Duration">
+                      <field string="Start Date" name="date"/>
+                      <field name="end_date"/>
+                  </group>
+              </group>
+          </sheet>
+      </form>
+  </field>
+</record>
+                                            <!--Kanban-->
+<record id="proves.event_kanban" model="ir.ui.view">
+    <field name="name">Event kanabn</field>
+    <field name="model">proves.event</field>
+    <field name="priority">10</field>
+    <field name="arch" type="xml">
+        <kanban>
+            <templates>
+                <t t-name="kanban-box">
+                    <li t-if="record.name.raw_value">
+                        <p style="border:2px solid Violet;" align="center">
+                            <field name="tipe_event"/>
+                        </p>
+                        Name:
+                        <field name="name"/><BR/>
+                        Participants:
+                        <field name="player_inc" widget="many2many_tags"/>
+
+                    </li>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
+                                            <!--Calendar-->
+<record model="ir.ui.view" id="proves.calendar_form">
+  <field name="name">calendar form</field>
+  <field name="model">proves.event</field>
+  <field name="arch" type="xml">
+      <calendar string="Session Calendar" date_start="date" date_stop="end_date"
+                color="tipe_event" mode="month">
+          <field name="player_inc"/>
+          <field name="tipe_event"/>
+      </calendar>
+  </field>
+</record>
+
+                     <!---/////////////////////  Alianza  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-->
+                                            <!--Action Window-->
+    <record model="ir.actions.act_window" id="proves.action_aliance_window">
+<field name="name">Aliances</field>
+<field name="res_model">proves.aliance</field>
+<field name="view_mode">tree,form,kanban</field>
+    </record>
+                                            <!--Tree-->
+          <record model="ir.ui.view" id="proves.aliance_list">
+      <field name="name">Aliance list</field>
+      <field name="model">proves.aliance</field>
+      <field name="arch" type="xml">
+  <tree>
+<field name="name"/>
+<field name="participants" widget="many2many_tags"/>
+<field name="image_small" widget="image"/>
+  </tree>
+      </field>
+          </record>
+                                            <!--Form-->
+<record model="ir.ui.view" id="proves.aliance_form">
+  <field name="name">aliance form</field>
+  <field name="model">proves.aliance</field>
+  <field name="arch" type="xml">
+      <form>
+          <sheet>
+              <group>
+                  <group string="Aliance">
+                      <field name="name"/>
+                      <field name="image" widget="image"/>
+                  </group>
+                  <group string="Members">
+                      <field name="participants" widget="many2many_tags"/>
+                  </group>
+              </group>
+          </sheet>
+      </form>
+  </field>
+</record>
+                                            <!--Kanban-->
+<record id="proves.aliance_kanban" model="ir.ui.view">
+    <field name="name">Aliance kanabn</field>
+    <field name="model">proves.aliance</field>
+    <field name="arch" type="xml">
+        <kanban>
+            <templates>
+                <t t-name="kanban-box">
+                    <li t-if="record.name.raw_value">
+                        <H1 style="background-color:hsla(0,100%,50%,0.5);"><field name="image_small" widget="image" />
+                            <field name="name"/></H1>
+                        Members:
+                        <field name="participants" widget="many2many_tags"/>
+                    </li>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
+
+                     <!---/////////////////////  Ciudadano  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-->
+                                            <!--Action Window-->
+    <record model="ir.actions.act_window" id="proves.action_citizen_window">
+<field name="name">Citizens</field>
+<field name="res_model">proves.citizen</field>
+<field name="view_mode">tree,form</field>
+    </record>
+                                            <!--Tree-->
+            <record model="ir.ui.view" id="proves.citizen_list">
+        <field name="name">Citizen list</field>
+        <field name="model">proves.citizen</field>
+        <field name="arch" type="xml">
+    <tree>
+<field name="name"/>
+<field name="life_expectacy" widget="progressbar"/>
+<field name="inteligence"/>
+<field name="force"/>
+<field name="ability"/>
+<field name="inhabiting"/>
+  </tree>
+      </field>
+          </record>
+                                            <!--Form-->
+                                            <!--Kanban-->
+                     <!---/////////////////////  Batalla  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-->
+                                            <!--Action Window-->
+    <record model="ir.actions.act_window" id="proves.action_battle_tree_window">
+<field name="name">Battle list</field>
+<field name="res_model">proves.battle</field>
+<field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="proves.action_battle_window">
+<field name="name">Battle</field>
+<field name="res_model">proves.battle</field>
+<field name="view_mode">form</field>
+    </record>
+                                            <!--Tree-->
+            <record model="ir.ui.view" id="proves.battle_list">
+      <field name="name">Battles list</field>
+      <field name="model">proves.battle</field>
+      <field name="arch" type="xml">
+  <tree>
+<field name="attacker"/>
+<field name="defender"/>
+<field name="name"/>
+<field name="attack"/>
+<field name="defend"/>
+<field name="start_date"/>
+<field name="end_date"/>
+<field name="att_pos"/>
+<field name="def_pos"/>
+<field name="finished"/>
+  </tree>
+      </field>
+          </record>
+                                            <!--Form-->
+<record model="ir.ui.view" id="proves.battle">
+  <field name="name">Battle form</field>
+  <field name="model">proves.battle</field>
+  <field name="arch" type="xml">
+      <form>
+          <sheet>
+              <group>
+<field name="finished"/>
+<field name="name" string="Title"/>
+<field name="attacker"/>
+<field name="defender"/>
+<field name="show_attack" string="Attacking planet"/>
+<field name="defend" string="Attack to:"/>
+<field name="start_date"/>
+<field name="end_date"/>
+<field name="att_pos" string="Attacking planet position"/>
+<field name="def_pos" string="Attacked planet position"/>
+<field name="distance"/>
+<field name="damage"/>
+              </group>
+          </sheet>
+      </form>
+  </field>
+</record>
+
+                     <!---/////////////////////  Mapa  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-->
+                                            <!--Action Window-->
+    <record model="ir.actions.act_window" id="proves.action_region_space_window">
+<field name="name">Map</field>
+<field name="res_model">proves.region_space</field>
+<field name="view_mode">tree,form</field>
+    </record>
+                                            <!--Tree-->
+            <record model="ir.ui.view" id="proves.region_space_list">
+      <field name="name">Map list</field>
+      <field name="model">proves.region_space</field>
+      <field name="arch" type="xml">
+  <tree>
+<field name="name"/>
+  </tree>
+      </field>
+          </record>
+                                            <!--Form-->
+<record model="ir.ui.view" id="proves.map_form">
+    <field name="name">player form</field>
+    <field name="model">proves.region_space</field>
+    <field name="arch" type="xml">
+        <form>
+            <style>
+                table{
+                    background-image: url("data:image/jpeg;base64,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");
+                }
+                td{
+                    background-image: url("space.jpg");
+                }
+                </style>
+            <sheet>
+                <field name="name"/>
+                <div>
+                    <input type="button" value="Genera una tabla" onclick="
+
+                          var body = document.getElementsByTagName('body')[0];
+
+                          var tabla   = document.createElement('table');
+                          var tblBody = document.createElement('tbody');
+
+                          for (var i = 0; i &lt; 30; i++) {
+                            var hilera = document.createElement('tr');
+
+                            for (var j = 0; j &lt; 30; j++) {
+                              var celda = document.createElement('td');
+                              var textoCelda = document.createTextNode(i+j);
+                              celda.appendChild(textoCelda);
+                              hilera.appendChild(celda);
+                            }
+                            tblBody.appendChild(hilera);
+                          }
+                          tabla.appendChild(tblBody);
+                          body.appendChild(tabla);
+                          tabla.setAttribute('border', '2');
+                        "/>
+                </div>
+            </sheet>
+        </form>
+    </field>
+</record>
+
+                     <!---/////////////////////  Construcciones  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-->
+                                            <!--Action Window-->
+    <record model="ir.actions.act_window" id="proves.action_nursery_window">
+<field name="name">Sleeping Buildings</field>
+<field name="res_model">nursery.structure</field>
+<field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="proves.action_power_station_window">
+<field name="name">Power Plants</field>
+<field name="res_model">power_station.structure</field>
+<field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="proves.action_defense_dome_window">
+<field name="name">Defense Buildings</field>
+<field name="res_model">defense_dome.structure</field>
+<field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="proves.action_attack_tower_window">
+<field name="name">Attack Buildings</field>
+<field name="res_model">attack_tower.structure</field>
+<field name="view_mode">tree,form</field>
+    </record>
+
+                                            <!--Tree Lists-->
+          <record model="ir.ui.view" id="proves.power_station_list">
+      <field name="name">Power stations list</field>
+      <field name="model">power_station.structure</field>
+      <field name="arch" type="xml">
+  <tree>
+<field name="name"/>
+<field name="lvl"/>
+<field name="built_in"/>
+<field name="energy"/>
+<field name="completed"/>
+  </tree>
+      </field>
+          </record>
+
+          <record model="ir.ui.view" id="proves.nursery_list">
+      <field name="name">Nursery list</field>
+      <field name="model">nursery.structure</field>
+      <field name="arch" type="xml">
+  <tree>
+<field name="name"/>
+<field name="lvl"/>
+<field name="built_in"/>
+<field name="completed"/>
+  </tree>
+      </field>
+          </record>
+
+          <record model="ir.ui.view" id="proves.defense_dome_list">
+      <field name="name">Defense dome list</field>
+      <field name="model">defense_dome.structure</field>
+      <field name="arch" type="xml">
+  <tree>
+<field name="name"/>
+<field name="lvl"/>
+<field name="built_in"/>
+<field name="buckler"/>
+<field name="completed"/>
+  </tree>
+      </field>
+          </record>
+
+          <record model="ir.ui.view" id="proves.attack_tower_list">
+      <field name="name">Attack towers list</field>
+      <field name="model">attack_tower.structure</field>
+      <field name="arch" type="xml">
+  <tree>
+<field name="name"/>
+<field name="lvl"/>
+<field name="built_in"/>
+<field name="damage"/>
+<field name="completed"/>
+  </tree>
+      </field>
+          </record>
+
+<!-- server action to the one above -->
+
+
+<!---///////////////////CRON\\\\\\\\\\\\\\\\\\\\\-->
+
+    <!--record model="ir.cron" forcecreate="True" id="game.cron_update">
+        <field name="name">Game: Cron Update</field>
+        <field name="model_id" ref="model_game_player"/>
+        <field name="state">code</field>
+        <field name="code">model.update_resources()</field>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
+        <field name="activity_user_type">specific</field>
+        <field name="doall" eval="False" />
+    </record-->
+
+
+<!---////////Top menu item\\\\\\\\-->
+
+<menuitem name="Game" id="proves.menu_root"/>
+
+
+<!---////////Menu Categories\\\\\\\\-->
+
+<menuitem name="Game" id="proves.menu_game" parent="proves.menu_root"/>
+<menuitem name="Players" id="proves.menu_player" parent="proves.menu_root"/>
+<menuitem name="Extra" id="proves.menu_extra" parent="proves.menu_root"/>
+
+
+<!---////////Menu SubCategories\\\\\\\\-->
+
+<menuitem name="Planets" id="proves.menu_planet_atrubutes" parent="proves.menu_game" action="proves.action_world_window"/>
+
+<menuitem name="Info" id="proves.menu_player_atributes" parent="proves.menu_player" action="proves.action_player_window"/>
+
+<menuitem name="Aliances" id="proves.menu_aliances_atributes" parent="proves.menu_extra" action="proves.action_aliance_window"/>
+
+<menuitem name="Events" id="proves.menu_events_atributes" parent="proves.menu_extra" action="proves.action_events_window"/>
+
+<menuitem name="Sleeping Buildings" id="proves.menu_events_nursery" parent="proves.menu_game" action="proves.action_nursery_window"/>
+
+<menuitem name="Power Plants" id="proves.menu_events_power_station" parent="proves.menu_game" action="proves.action_power_station_window"/>
+
+<menuitem name="Attack Buildings" id="proves.menu_attack_tower_atributes" parent="proves.menu_game" action="proves.action_attack_tower_window"/>
+
+<menuitem name="Defense Buildings" id="proves.menu_defense_dome_atributes" parent="proves.menu_game" action="proves.action_defense_dome_window"/>
+
+<menuitem name="Citizens" id="proves.menu_citizens" parent="proves.menu_game" action="proves.action_citizen_window"/>
+
+<menuitem name="Map" id="proves.region_space" parent="proves.menu_extra" action="proves.action_region_space_window"/>
+
+<menuitem name="Battle" id="proves.battle" parent="proves.menu_extra" action="proves.action_battle_tree_window"/>
+
+  </data>
+</odoo>
+
