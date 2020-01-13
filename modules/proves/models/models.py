@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api, tools
 from datetime import datetime, timedelta
+from openerp.exceptions import ValidationError
 import random
 import math
 import json
@@ -60,7 +61,8 @@ class player(models.Model):
 
         for p in self:
             w_image = self.env.ref('proves.world'+str(random.randint(1,7)))
-            bkg_image = self.env.ref('proves.background_kanban_planet')
+            ps_image = self.env.ref('proves.power_station_lvl1')
+            n_image = self.env.ref('proves.nursery_lvl1')
 
             w = self.env['proves.world'].create({
                 'name': 'Default Planet'+str(random.randint(1,600)),
@@ -68,22 +70,25 @@ class player(models.Model):
                 'template': False,
                 'lvl': 1,
                 'owner': p.id,
-                'image_background': bkg_image,
                 })
             ps = self.env['power_station.structure'].create({
                 'name': 'Default Power Station'+str(random.randint(1,600)),
+                'template': False,
                 'completed': False,
                 'perc_complete': 0,
                 'lvl': 1,
                 'built_in': w.id,
                 'kanban_state':'start',
+                'image':ps_image.image,
             })
             n = self.env['nursery.structure'].create({
                 'name': 'Default Nursery'+str(random.randint(1,600)),
+                'template': False,
                 'completed': False,
                 'perc_complete': 0,
                 'lvl': 1,
                 'built_in': w.id,
+                'image': n_image.image,
             })
 
             for i in range(random.randint(1,7)):
@@ -250,7 +255,7 @@ class world(models.Model):
 
                         ps.energy_xm = ps.energy + wk.inteligence / 2
                         ps.energy_xm = ps.energy + wk.force / 3
-                        ps.energy_xm = ps.energy + wk.hability / 6
+                        ps.energy_xm = ps.energy + wk.ability / 6
 
                     if total_wk == 0:
                         ps.kanban_state = 'blocked'
@@ -283,7 +288,7 @@ class world(models.Model):
 
                         n.births_xm = n.births_xm + wk.inteligence / 6
                         n.births_xm = n.births_xm + wk.force / 3
-                        n.births_xm = n.births_xm + wk.hability / 2
+                        n.births_xm = n.births_xm + wk.ability / 2
 
                     if total_wk == 0:
                         n.kanban_state = 'blocked'
@@ -323,7 +328,7 @@ class world(models.Model):
 
                         at.damage_xm = at.damage_xm + wk.inteligence / 2
                         at.damage_xm = at.damage_xm + wk.force / 3
-                        at.damage_xm = at.damage_xm + wk.hability / 3
+                        at.damage_xm = at.damage_xm + wk.ability / 3
 
                     if total_wk == 0:
                         at.kanban_state = 'blocked'
@@ -356,7 +361,7 @@ class world(models.Model):
 
                         dd.buckler_xm = dd.buckler_xm + wk.inteligence / 6
                         dd.buckler_xm = dd.buckler_xm + wk.force / 2
-                        dd.buckler_xm = dd.buckler_xm + wk.hability / 2
+                        dd.buckler_xm = dd.buckler_xm + wk.ability / 2
 
                     if total_wk == 0:
                         dd.kanban_state = 'blocked'
@@ -372,11 +377,12 @@ class world(models.Model):
                         dd.kanban_state = 'blocked'
 
             for r in w.residents:
-                if r.life_expectacy > 0:
-                    r.life_expectacy -= random.randint(1,6)
-                else:
+                r.life_expectacy -= random.randint(1, 6)
+                if r.life_expectacy <= 0:
                     w.population -= 1
                     r.unlink()
+
+
 
     @api.depends('image')
     def _get_images(self):
@@ -393,11 +399,13 @@ class world(models.Model):
     @api.multi
     def create_new_power_station(self):
         for w in self:
-            if w.structures < w.tiles and w.total_energy >= 70:
+            if w.structures < w.tiles and w.total_energy >= 40:
 
-                cost_x_ps = 70 / w.num_ps
+                cost_x_ps = 40 / w.num_ps
                 for ps in w.power_stations:
                     ps.energy = ps.energy - cost_x_ps
+
+                ps_image = self.env.ref('proves.power_station_lvl1')
 
                 ps = self.env['power_station.structure'].create({
                     'name': 'Default Power Station'+str(random.randint(1,600)),
@@ -406,6 +414,7 @@ class world(models.Model):
                     'lvl': 1,
                     'built_in': w.id,
                     'kanban_state':'start',
+                    'image': ps_image.image,
                 })
 
     @api.multi
@@ -417,6 +426,8 @@ class world(models.Model):
                 for ps in w.power_stations:
                     ps.energy = ps.energy - cost_x_ps
 
+                n_image = self.env.ref('proves.nursery_lvl1')
+
                 n = self.env['nursery.structure'].create({
                     'name': 'Deffault Nursery'+str(random.randint(1,600)),
                     'completed': False,
@@ -424,16 +435,19 @@ class world(models.Model):
                     'lvl': 1,
                     'built_in': w.id,
                     'kanban_state': 'start',
+                    'image': n_image.image,
                 })
 
     @api.multi
     def create_new_defense_dome(self):
         for w in self:
-            if w.structures < w.tiles and w.total_energy >= 300:
+            if w.structures < w.tiles and w.total_energy >= 100:
 
                 cost_x_ps = 300 / w.num_ps
                 for ps in w.power_stations:
                     ps.energy = ps.energy - cost_x_ps
+
+                dd_image = self.env.ref('proves.defense_dome_lvl1')
 
                 dd = self.env['defense_dome.structure'].create({
                     'name': 'Deffault Defense Dome'+str(random.randint(1,600)),
@@ -442,16 +456,19 @@ class world(models.Model):
                     'lvl': 1,
                     'built_in': w.id,
                     'kanban_state':'start',
+                    'image': dd_image.image,
                 })
 
     @api.multi
     def create_new_attack_tower(self):
         for w in self:
-            if w.structures < w.tiles and w.total_energy >= 350:
+            if w.structures < w.tiles and w.total_energy >= 100:
 
                 cost_x_ps = 350 / w.num_ps
                 for ps in w.power_stations:
                     ps.energy = ps.energy - cost_x_ps
+
+                ta_image = self.env.ref('proves.defense_dome_lvl1')
 
                 ta = self.env['attack_tower.structure'].create({
                     'name': 'Deffault Attack Tower'+str(random.randint(1,600)),
@@ -460,6 +477,7 @@ class world(models.Model):
                     'lvl': 1,
                     'built_in': w.id,
                     'kanban_state':'start',
+                    'image': ta_image.image,
                 })
 
 class battle(models.Model):
@@ -544,10 +562,22 @@ class battle(models.Model):
                     dd.buckler = dd.buckler-dm_for_dd
                 b.finished = True
 
+class citizen(models.Model):
+    _name = 'proves.citizen'
+    name = fields.Char()
+    dead = fields.Boolean(default=False)
+    life_expectacy = fields.Integer(default=90)
+    inteligence = fields.Integer()
+    force = fields.Integer()
+    ability = fields.Integer()
+
+    inhabiting = fields.Many2one('proves.world', ondelete='cascade')
+    working = fields.Many2one('proves.structure', domain="[('built_in', '=', inhabiting)]", ondelete='cascade')
 
 class structure(models.Model):
     _name = 'proves.structure'
     name = fields.Char()
+    template = fields.Boolean()
 
     cost = fields.Integer(default=20)
     completed = fields.Boolean(default=False)
@@ -557,6 +587,9 @@ class structure(models.Model):
     built_in = fields.Many2one('proves.world', ondelete='cascade')
     workers = fields.One2many('proves.citizen', 'working')
 
+    image = fields.Binary()
+    image_small = fields.Binary(string='Image', compute='_get_images', store=True)
+
     #EstadoCo
     kanban_state = fields.Selection([
         ('start', 'Construction in progress'),
@@ -564,10 +597,17 @@ class structure(models.Model):
         ('producing', 'In production')],
         'Kanban State', default='start')
 
+    @api.depends('image')
+    def _get_images(self):
+        for i in self:
+            image = i.image
+            data = tools.image_get_resized_images(image)
+            i.image_small = data["image_small"]
+
 
 class power_station(models.Model):
     _name = 'power_station.structure'
-    _inherit = 'proves.structure'
+    _inherits = {'proves.structure':'structure_id'}
 
     energy = fields.Integer(default=20)
     max_energy = fields.Integer(default=100)
@@ -575,7 +615,7 @@ class power_station(models.Model):
 
 class attack_tower(models.Model):
     _name = 'attack_tower.structure'
-    _inherit = 'proves.structure'
+    _inherits = {'proves.structure':'structure_id'}
 
     damage = fields.Integer(default=40)
     max_damage = fields.Integer(default=400)
@@ -583,7 +623,7 @@ class attack_tower(models.Model):
 
 class defense_dome(models.Model):
     _name = 'defense_dome.structure'
-    _inherit = 'proves.structure'
+    _inherits = {'proves.structure':'structure_id'}
 
     buckler = fields.Integer(default=50)
     max_buckler = fields.Integer(default=200)
@@ -591,22 +631,11 @@ class defense_dome(models.Model):
 
 class nursery(models.Model):
     _name = 'nursery.structure'
-    _inherit = 'proves.structure'
+    _inherits = {'proves.structure':'structure_id'}
 
     residents = fields.Integer(default=3)
     capacity = fields.Integer(default=40)
     births_xm = fields.Integer(default=20)
-
-class citizen(models.Model):
-    _name = 'proves.citizen'
-    name = fields.Char()
-    life_expectacy = fields.Integer(default=90)
-    inteligence = fields.Integer()
-    force = fields.Integer()
-    ability = fields.Integer()
-
-    inhabiting = fields.Many2one('proves.world', ondelete='cascade')
-    working = fields.Many2one('proves.structure')
 
 class event(models.Model):
     _name = 'proves.event'
