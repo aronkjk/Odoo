@@ -80,6 +80,7 @@ class player(models.Model):
                 'built_in': w.id,
                 'kanban_state':'start',
                 'image':ps_image.image,
+                'image_lvl': ps_image.image_lvl,
             })
             n = self.env['nursery.structure'].create({
                 'name': 'Default Nursery'+str(random.randint(1,600)),
@@ -89,6 +90,7 @@ class player(models.Model):
                 'lvl': 1,
                 'built_in': w.id,
                 'image': n_image.image,
+                'image_lvl': n_image.image_lvl,
             })
 
             for i in range(random.randint(1,7)):
@@ -239,15 +241,6 @@ class world(models.Model):
             #Evaluar nivels i fer produccio
             for ps in w.power_stations:
                 if ps.completed:
-                    if ps.lvl == 2:
-                        ps.energy_xm = 7
-                        ps.max_energy = 175
-                    if ps.lvl == 3:
-                        ps.energy_xm = 10
-                        ps.max_energy = 300
-                    if ps.lvl == 4:
-                        ps.energy_xm = 15
-                        ps.max_energy = 600
 
                     total_wk = 0
                     for wk in ps.workers:
@@ -265,22 +258,13 @@ class world(models.Model):
                     if ps.energy < ps.max_energy:
                         ps.energy += ps.energy_xm
                 else:
-                    ps.perc_complete += 3.5
+                    ps.perc_complete += 25
                     if ps.perc_complete >= 100:
                         ps.completed = True
                         ps.kanban_state = 'blocked'
 
             for n in w.nursery:
                 if n.completed:
-                    if n.lvl == 2:
-                        n.births_xm = 8
-                        n.capacity = 80
-                    if n.lvl == 3:
-                        n.births_xm = 16
-                        n.capacity = 160
-                    if n.lvl == 4:
-                        n.births_xm = 32
-                        n.capacity = 320
 
                     total_wk = 0
                     for wk in n.workers:
@@ -305,23 +289,15 @@ class world(models.Model):
                                 'inhabiting' : w.id,
                             })
                 else:
-                    n.perc_complete += 3.5
+                    n.perc_complete += 25
                     if n.perc_complete >= 100:
                         n.completed = True
                         n.kanban_state = 'blocked'
 
             for at in w.attack_towers:
                 if at.completed:
-                    if at.lvl == 2:
-                        at.damage_xm = 8
-                        at.max_damage = 600
-                    if at.lvl == 3:
-                        at.births_xm = 16
-                        at.max_damage = 800
-                    if at.lvl == 4:
-                        at.births_xm = 50
-                        at.max_damage = 1500
 
+##Revisar el numero de trabajadores y el estado del edificio
                     total_wk = 0
                     for wk in at.workers:
                         total_wk = sum(wk)
@@ -338,22 +314,13 @@ class world(models.Model):
                     if at.damage < at.max_damage:
                         at.damage += at.damage_xm
                 else:
-                    at.perc_complete += 3.5
+                    at.perc_complete += 25
                     if at.perc_complete >= 100:
                         at.completed = True
                         at.kanban_state = 'blocked'
 
             for dd in w.defense_dome:
                 if dd.completed:
-                    if dd.lvl == 2:
-                        dd.buckler_xm = 8
-                        dd.max_buckler = 600
-                    if dd.lvl == 3:
-                        dd.buckler_xm = 16
-                        dd.max_buckler = 800
-                    if dd.lvl == 4:
-                        dd.buckler_xm = 50
-                        dd.max_buckler = 1500
 
                     total_wk = 0
                     for wk in dd.workers:
@@ -371,7 +338,7 @@ class world(models.Model):
                     if dd.buckler < dd.max_buckler:
                         dd.buckler += dd.buckler_xm
                 else:
-                    dd.perc_complete += 3.5
+                    dd.perc_complete += 25
                     if dd.perc_complete >= 100:
                         dd.completed = True
                         dd.kanban_state = 'blocked'
@@ -415,6 +382,7 @@ class world(models.Model):
                     'built_in': w.id,
                     'kanban_state':'start',
                     'image': ps_image.image,
+                    'image_lvl': ps_image.image_lvl,
                 })
 
     @api.multi
@@ -436,6 +404,7 @@ class world(models.Model):
                     'built_in': w.id,
                     'kanban_state': 'start',
                     'image': n_image.image,
+                    'image_lvl': n_image.image_lvl,
                 })
 
     @api.multi
@@ -457,6 +426,7 @@ class world(models.Model):
                     'built_in': w.id,
                     'kanban_state':'start',
                     'image': dd_image.image,
+                    'image_lvl': dd_image.image_lvl,
                 })
 
     @api.multi
@@ -468,7 +438,7 @@ class world(models.Model):
                 for ps in w.power_stations:
                     ps.energy = ps.energy - cost_x_ps
 
-                ta_image = self.env.ref('proves.defense_dome_lvl1')
+                ta_image = self.env.ref('proves.attack_tower_lvl1')
 
                 ta = self.env['attack_tower.structure'].create({
                     'name': 'Deffault Attack Tower'+str(random.randint(1,600)),
@@ -478,6 +448,7 @@ class world(models.Model):
                     'built_in': w.id,
                     'kanban_state':'start',
                     'image': ta_image.image,
+                    'image_lvl': ta_image.image_lvl,
                 })
 
 class battle(models.Model):
@@ -588,7 +559,9 @@ class structure(models.Model):
     workers = fields.One2many('proves.citizen', 'working')
 
     image = fields.Binary()
+    image_lvl = fields.Binary()
     image_small = fields.Binary(string='Image', compute='_get_images', store=True)
+    image_lvl_small = fields.Binary(string='Image', compute='_get_lvl_images', store=True)
 
     #EstadoCo
     kanban_state = fields.Selection([
@@ -605,6 +578,14 @@ class structure(models.Model):
             i.image_small = data["image_small"]
 
 
+    @api.depends('image_lvl')
+    def _get_lvl_images(self):
+        for i in self:
+            image = i.image_lvl
+            data = tools.image_get_resized_images(image)
+            i.image_lvl_small = data["image_small"]
+
+
 class power_station(models.Model):
     _name = 'power_station.structure'
     _inherits = {'proves.structure':'structure_id'}
@@ -612,6 +593,32 @@ class power_station(models.Model):
     energy = fields.Integer(default=20)
     max_energy = fields.Integer(default=100)
     energy_xm = fields.Integer(default=20)
+
+    @api.multi
+    def up_lvl(self):
+        if self.lvl == 3:
+            ps_image = self.env.ref('proves.power_station_lvl4')
+            self.image_lvl = ps_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.energy_xm = 15
+            self.max_energy = 600
+            self.built_in.create_resources()
+        if self.lvl == 2:
+            ps_image = self.env.ref('proves.power_station_lvl3')
+            self.image_lvl = ps_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.energy_xm = 10
+            self.max_energy = 300
+            self.built_in.create_resources()
+        if self.lvl == 1:
+            ps_image = self.env.ref('proves.power_station_lvl2')
+            self.image_lvl = ps_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.energy_xm = 7
+            self.max_energy = 175
+            self.built_in.create_resources()
+
+
 
 class attack_tower(models.Model):
     _name = 'attack_tower.structure'
@@ -621,6 +628,30 @@ class attack_tower(models.Model):
     max_damage = fields.Integer(default=400)
     damage_xm = fields.Integer(default=20)
 
+    @api.multi
+    def up_lvl(self):
+        if self.lvl == 3:
+            at_image = self.env.ref('proves.attack_tower_lvl4')
+            self.image_lvl = at_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.births_xm = 50
+            self.max_damage = 1500
+            self.built_in.create_resources()
+        if self.lvl == 2:
+            at_image = self.env.ref('proves.attack_tower_lvl3')
+            self.image_lvl = at_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.births_xm = 16
+            self.max_damage = 800
+            self.built_in.create_resources()
+        if self.lvl == 1:
+            at_image = self.env.ref('proves.attack_tower_lvl2')
+            self.image_lvl = at_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.damage_xm = 8
+            self.max_damage = 600
+            self.built_in.create_resources()
+
 class defense_dome(models.Model):
     _name = 'defense_dome.structure'
     _inherits = {'proves.structure':'structure_id'}
@@ -629,6 +660,30 @@ class defense_dome(models.Model):
     max_buckler = fields.Integer(default=200)
     buckler_xm = fields.Integer(default=20)
 
+    @api.multi
+    def up_lvl(self):
+        if self.lvl == 3:
+            dd_image = self.env.ref('proves.defense_dome_lvl4')
+            self.image_lvl = dd_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.buckler_xm = 50
+            self.max_buckler = 1500
+            self.built_in.create_resources()
+        if self.lvl == 2:
+            dd_image = self.env.ref('proves.defense_dome_lvl3')
+            self.image_lvl = dd_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.buckler_xm = 16
+            self.max_buckler = 800
+            self.built_in.create_resources()
+        if self.lvl == 1:
+            dd_image = self.env.ref('proves.defense_dome_lvl2')
+            self.image_lvl = dd_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.buckler_xm = 8
+            self.max_buckler = 600
+            self.built_in.create_resources()
+
 class nursery(models.Model):
     _name = 'nursery.structure'
     _inherits = {'proves.structure':'structure_id'}
@@ -636,6 +691,30 @@ class nursery(models.Model):
     residents = fields.Integer(default=3)
     capacity = fields.Integer(default=40)
     births_xm = fields.Integer(default=20)
+
+    @api.multi
+    def up_lvl(self):
+        if self.lvl == 3:
+            n_image = self.env.ref('proves.nursery_lvl4')
+            self.image_lvl = n_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.births_xm = 32
+            self.capacity = 320
+            self.built_in.create_resources()
+        if self.lvl == 2:
+            n_image = self.env.ref('proves.nursery_lvl3')
+            self.image_lvl = n_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.births_xm = 16
+            self.capacity = 160
+            self.built_in.create_resources()
+        if self.lvl == 1:
+            n_image = self.env.ref('proves.nursery_lvl2')
+            self.image_lvl = n_image.image_lvl
+            self.lvl = self.lvl + 1
+            self.births_xm = 8
+            self.capacity = 80
+            self.built_in.create_resources()
 
 class event(models.Model):
     _name = 'proves.event'
