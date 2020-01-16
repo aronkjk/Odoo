@@ -124,6 +124,7 @@
         <form>
             <sheet>
                 <field name="name"/>
+                <field name="workers" widget="many2many_tags"/>
                 <group>
                     <field name="lvl"/>
                 </group>
@@ -136,13 +137,13 @@
                                             <!--Action Window-->
     <record model="ir.actions.act_window" id="proves.action_player_window">
 <field name="name">Players</field>
-<field name="res_model">proves.player</field>
+<field name="res_model">res.partner</field>
 <field name="view_mode">tree,form,kanban</field>
     </record>
                                             <!--Tree-->
 <record model="ir.ui.view" id="proves.players_list">
       <field name="name">players list</field>
-      <field name="model">proves.player</field>
+      <field name="model">res.partner</field>
       <field name="arch" type="xml">
   <tree decoration-success="prestige=='4'" decoration-muted="prestige=='2'" decoration-primary="prestige=='5'"
         decoration-warning="prestige=='6'" decoration-info="prestige=='3'" decoration-danger="prestige=='1'"
@@ -156,12 +157,14 @@
           </record>
                                             <!--Form-->
 <record model="ir.ui.view" id="proves.player_form">
-  <field name="name">player form</field>
-  <field name="model">proves.player</field>
-  <field name="arch" type="xml">
-      <form>
-          <sheet>
-              <group>
+    <field name="name">player form</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="arch" type="xml">
+        <notebook position="inside">
+          <page string="Player">
+            <sheet>
+                <group>
                   <group string="Player">
                       <field name="name"/>
                       <field name="image" widget="image" style="width:100px;"/>
@@ -170,9 +173,9 @@
                       <field name="prestige" widget="priority"/>
                       <field name="belongs_aliance" string="Aliance member"/>
                   </group>
-              </group>
-              <notebook>
-                  <page string="Production">
+                </group>
+                <notebook>
+                    <page string="Production">
                       <field name="worlds_owner">
                           <kanban>
                               <field name="name"/>
@@ -192,13 +195,13 @@
                                                           Energy
                                                           <field name="perc_energy" widget="progressbar"/>
                                                           Energy per minute:
-                                                          <field name="energy_xm"/>
+                                                          <field name="production_xm"/>
                                                       </th>
                                                       <th style="background-color:rgba(235, 127, 198, 30);">
                                                           Population
                                                           <field name="perc_population" widget="progressbar"/>
                                                           Births per minute:
-                                                          <field name="births_xm"/>
+                                                          <field name="production_xm"/>
                                                       </th>
                                                   </tr>
                                                   <tr>
@@ -206,13 +209,13 @@
                                                           Power attack
                                                           <field name="perc_power_attack" widget="progressbar"/>
                                                           Power attack per minute:
-                                                          <field name="power_attack_xm"/>
+                                                          <field name="production_xm"/>
                                                       </th>
                                                       <th style="background-color:rgba(60, 159, 216, 30);">
                                                            Power defense
                                                           <field name="perc_power_defense" widget="progressbar"/>
                                                           Power defense per minute:
-                                                          <field name="power_defense_xm"/>
+                                                          <field name="production_xm"/>
                                                       </th>
                                                   </tr>
                                               </table>
@@ -222,8 +225,8 @@
                               </templates>
                           </kanban>
                       </field>
-                  </page>
-                  <page string="Planets Owner Info">
+                    </page>
+                    <page string="Planets Owner Info">
                       <button name="create_new_world" type="object" string="Create New World"
                                         class="oe_highlight"/>
                       <field name="worlds_owners">
@@ -294,21 +297,22 @@
                               </templates>
                           </kanban>
                       </field>
-                  </page>
-                  <page string="Events list">
+                    </page>
+                    <page string="Events list">
                       <tree>
                           <field name="events"/>
                       </tree>
                   </page>
-              </notebook>
-          </sheet>
-      </form>
-  </field>
+                </notebook>
+            </sheet>
+          </page>
+        </notebook>
+    </field>
 </record>
                                             <!--Kanban-->
 <record id="proves.player_kanban" model="ir.ui.view">
     <field name="name">Player kanabn</field>
-    <field name="model">proves.player</field>
+    <field name="model">res.partner</field>
     <field name="arch" type="xml">
         <kanban>
             <templates>
@@ -454,6 +458,8 @@
                                                             Level:
                                                             <field name="lvl"/>
                                                             <field name="image_lvl_small" widget="image"/>
+                                                            Energy/minute:
+                                                            <field name="production_xm"/>
                                                             <button name="up_lvl" type="object" align="right" icon="fa-arrow-up" style="
                                                                 display: inline-block;
                                                                 border-radius: 4px;
@@ -529,7 +535,7 @@
                                                         </h4>
                                                         <field name="kanban_state" widget="statusbar"/>
                                                         <field name="perc_complete" widget="percentpie" string=" Progress" attrs="{'invisible':[('kanban_state','!=','start')]}"/>
-                                                        <field name="residents" widget="gauge" options="{'max_field': 'capacity'}" attrs="{'invisible':[('kanban_state','=','start')]}"/>
+                                                        <field name="workers" widget="gauge" options="{'max_field': 'capacity'}" attrs="{'invisible':[('kanban_state','=','start')]}"/>
                                                         <div style="margin-bottom: 20px; margin-left:15px">
                                                             Workers:
                                                             <field name="workers"/>
@@ -538,6 +544,8 @@
                                                             Level:
                                                             <field name="lvl"/>
                                                             <field name="image_lvl_small" widget="image"/>
+                                                            Births/minute:
+                                                            <field name="production_xm"/>
                                                             <button name="up_lvl" type="object" align="right" icon="fa-arrow-up" style="
                                                                 display: inline-block;
                                                                 border-radius: 4px;
@@ -622,6 +630,8 @@
                                                             Level:
                                                             <field name="lvl"/>
                                                             <field name="image_lvl_small" widget="image"/>
+                                                            Buckler/minute:
+                                                            <field name="production_xm"/>
                                                             <button name="up_lvl" type="object" align="right" icon="fa-arrow-up" style="
                                                                 display: inline-block;
                                                                 border-radius: 4px;
@@ -706,6 +716,8 @@
                                                             Level:
                                                             <field name="lvl"/>
                                                             <field name="image_lvl_small" widget="image"/>
+                                                            Power Damage/minute:
+                                                            <field name="production_xm"/>
                                                             <button name="up_lvl" type="object" align="right" icon="fa-arrow-up" style="
                                                                 display: inline-block;
                                                                 border-radius: 4px;
@@ -761,34 +773,34 @@
                                 </field>
                             </page>
                             <page string="Citizens">
-                            <field name="residents">
-                                <kanban>
-                                    <field name="name"/>
-                                    <field name="id"/>
-                                    <templates>
-                                        <t t-name="kanban-box">
-                                            <div class="oe_product_card">
-                                                <tree>
-                                                    <h4>
-                                                        <field name="name"/>
-                                                    </h4>
-                                                    Inteligence:
-                                                    <field name="inteligence"/>
-                                                    Force:
-                                                    <field name="force"/>
-                                                    Ability:
-                                                    <field name="ability"/>
-                                                    <field name="dead" attrs="{'invisible':[('dead','!=','FALSE')]}"/>
-                                                    <field name="life_expectacy" widget="progressbar"/>
-                                                    Working in:
-                                                    <field name="working"/>
-                                                </tree>
-                                            </div>
-                                        </t>
-                                    </templates>
-                                </kanban>
-                            </field>
-                          </page>
+                                <field name="residents">
+                                    <kanban>
+                                        <field name="name"/>
+                                        <field name="id"/>
+                                        <templates>
+                                            <t t-name="kanban-box">
+                                                <div class="oe_product_card">
+                                                    <tree>
+                                                        <h4>
+                                                            <field name="name"/>
+                                                        </h4>
+                                                        Inteligence:
+                                                        <field name="inteligence"/>
+                                                        Force:
+                                                        <field name="force"/>
+                                                        Ability:
+                                                        <field name="ability"/>
+                                                        <field name="dead" attrs="{'invisible':[('dead','!=','FALSE')]}"/>
+                                                        <field name="life_expectacy" widget="progressbar"/>
+                                                        Working in:
+                                                        <field name="working"/>
+                                                    </tree>
+                                                </div>
+                                            </t>
+                                        </templates>
+                                    </kanban>
+                                </field>
+                            </page>
                         </notebook>
                     </page>
                     <page string="War">
@@ -888,7 +900,7 @@
                             <field name="free_tiles" widget="gauge" options="{'max_field': 'tiles'}"/>
                             <HR width="20%"/>
                             Births/minute:
-                            <field name="births_xm"/>
+                            <field name="production_xm"/>
                             <BR/>
                             Power Plants:
                             <field name="power_stations" widget="many2many_tags"/>
@@ -1206,18 +1218,18 @@
 
 <!---///////////////////CRON\\\\\\\\\\\\\\\\\\\\\-->
 
-    <!--record model="ir.cron" forcecreate="True" id="game.cron_update">
-        <field name="name">Game: Cron Update</field>
-        <field name="model_id" ref="model_game_player"/>
-        <field name="state">code</field>
-        <field name="code">model.update_resources()</field>
-        <field name="user_id" ref="base.user_root"/>
-        <field name="interval_number">1</field>
-        <field name="interval_type">minutes</field>
-        <field name="numbercall">-1</field>
-        <field name="activity_user_type">specific</field>
-        <field name="doall" eval="False" />
-    </record-->
+<!--record model="ir.cron" forcecreate="True" id="proves.cron_update">
+    <field name="name">Game: Cron Update</field>
+    <field name="model_id" ref="model_proves_world"/>
+    <field name="state">code</field>
+    <field name="code">model.create_resources()</field>
+    <field name="user_id" ref="base.user_root"/>
+    <field name="interval_number">1</field>
+    <field name="interval_type">minutes</field>
+    <field name="numbercall">-1</field>
+    <field name="activity_user_type">specific</field>
+    <field name="doall" eval="False" />
+</record-->
 
 
 <!---////////Top menu item\\\\\\\\-->
