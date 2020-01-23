@@ -77,9 +77,9 @@ class player(models.Model):
                 'kanban_state':'start',
                 'image':ps_image.image,
                 'image_lvl': ps_image.image_lvl,
-                'self.inc_int': 5,
-                'self.inc_frc': 6,
-                'self.inc_abt': 9,
+                'inc_int': 5,
+                'inc_frc': 6,
+                'inc_abt': 9,
             })
             n = self.env['nursery.structure'].create({
                 'name': 'Default Nursery'+str(random.randint(1,600)),
@@ -90,9 +90,9 @@ class player(models.Model):
                 'built_in': w.id,
                 'image': n_image.image,
                 'image_lvl': n_image.image_lvl,
-                'self.inc_int': 9,
-                'self.inc_frc': 6,
-                'self.inc_abt': 5,
+                'inc_int': 9,
+                'inc_frc': 6,
+                'inc_abt': 5,
                 'production_xm': 3,
             })
 
@@ -130,7 +130,8 @@ class world(models.Model):
 
     tiles = fields.Integer(default=30)
     free_tiles = fields.Integer(compute='_free_tiles')
-    structures = fields.Integer(compute='_get_structures')
+    num_structures = fields.Integer(compute='_get_structures')
+    structures = fields.One2many('proves.structure', 'built_in')
 
     num_nur = fields.Integer(compute='_get_structures')
     production_xm = fields.Integer(compute='_get_structures')
@@ -167,38 +168,39 @@ class world(models.Model):
     @api.depends()
     def _free_tiles(self):
         for w in self:
-            w.free_tiles = w.tiles - w.structures
+            w.free_tiles = w.tiles - w.num_structures
 
     @api.depends()
     def _get_structures(self):
         for w in self:
-
+            w.num_structures = len(w.structures)
             for r in w.residents:
                 w.population += 1
 
+            #por tipo de estrucura
             for ps in w.power_stations:
                 w.num_ps += 1
-                w.structures += 1
-                w.production_xm += ps.production_xm
+                #w.num_structures += 1
+                w.energy_xm += ps.production_xm
                 w.max_energy += ps.max_energy
                 w.total_energy += ps.energy
 
             for n in w.nursery:
                 w.num_nur += 1
-                w.structures += 1
+                #w.num_structures += 1
                 w.production_xm += n.production_xm
                 w.max_population += n.capacity
 
             for at in w.attack_towers:
                 w.num_at += 1
-                w.structures += 1
+                #w.num_structures += 1
                 w.power_attack_xm += at.production_xm
                 w.power_attack += at.damage
                 w.max_power_attack += at.max_damage
 
             for dd in w.defense_dome:
                 w.num_dd += 1
-                w.structures += 1
+                #w.num_structures += 1
                 w.power_defense_xm += dd.production_xm
                 w.max_power_defense += dd.max_buckler
                 w.power_defense += dd.buckler
@@ -225,33 +227,39 @@ class world(models.Model):
                  "Krishgal", "Galda", "Kuquilu", "Kitara", "Margora", "Visenuky", "Prasha", "Ardeva",
                  "Gulgexo", "Golugrog", "Grith", "Zaisty", "Beera", "Adimha", "Krutundu"]
 
-        for w in self:
+        for w in self.search([]):
 
-            #Battales
+            #Batallas
             for b in w.defender:
                 if b.finished == False:
                     b.compute_battle()
 
-            #Evaluar nivels i fer produccio
+            #Ciudadanos
+            for r in w.residents:
+                r.life_expectacy -= random.randint(1, 6)
+                if r.life_expectacy <= 0:
+                    w.population -= 1
+                    #r.unlink()
+
+            #Produccion
             for ps in w.power_stations:
                 if ps.completed:
-
-                    total_wk = 0
-                    for wk in ps.workers:
-                        total_wk += 1
-
-                        ps.production_xm = ps.production_xm + wk.inteligence / ps.inc_int
-                        ps.production_xm = ps.production_xm + wk.force / ps.inc_frc
-                        ps.production_xm = ps.production_xm + wk.ability / ps.inc_abt
-
+                    total_wk = len(ps.workers)
 
                     if total_wk == 0:
                         ps.kanban_state = 'blocked'
                     else:
                         ps.kanban_state = 'producing'
+                        ps.production_xm = 20
+                        for wk in ps.workers:
+                            ps.production_xm += (wk.inteligence / ps.inc_int) + (wk.force / ps.inc_frc) + (wk.ability / ps.inc_abt)
 
-                    if (ps.energy + ps.production_xm) <= ps.max_energy:
-                        ps.energy += ps.production_xm
+                        if ps.energy < ps.max_energy:
+                            limit = ps.max_energy - ps.energy
+                            if ps.production_xm <= limit:
+                                ps.energy += ps.production_xm
+                            else:
+                                ps.energy += ps.production_xm - limit
                 else:
                     ps.perc_complete += 25
                     if ps.perc_complete >= 100:
@@ -260,36 +268,30 @@ class world(models.Model):
 
             for n in w.nursery:
                 if n.completed:
-
-                    if w.population < w.max_population:
-                        #Se crean de 0 a birds_xm
-                        for b in range(int(round(n.production_xm))):
-                            a = self.env['proves.citizen'].create({
-                                'name' :  str(random.choice(names)),
-                                'inteligence' : str(random.randint(1,7)),
-                                'force' : str(random.randint(1,7)),
-                                'ability' : str(random.randint(1,7)),
-                                'inhabiting' : w.id,
-                                'working': n.id,
-                            })
-
-                    total_wk = 0
-                    for wk in n.workers:
-                        total_wk = sum(wk)
-
-                        n.production_xm = n.production_xm + wk.inteligence / n.inc_int
-                        n.production_xm = n.production_xm + wk.force / n.inc_frc
-                        n.production_xm = n.production_xm + wk.ability / n.inc_abt
+                    total_wk = len(n.workers)
 
                     if total_wk == 0:
                         n.kanban_state = 'blocked'
                     else:
                         n.kanban_state = 'producing'
-
-                    if total_wk > n.capacity:
+                        n.production_xm = 3
                         for wk in n.workers:
-                            wk.life_expectacy -=  random.randint(1, total_wk)
+                            n.production_xm += (wk.inteligence / n.inc_int) + (wk.force / n.inc_frc) + (wk.ability / n.inc_abt)
 
+                        if w.population < w.max_population:
+                            limit =  n.capacity - total_wk
+                            cnt = 0
+                            for b in range(0,int(round(n.production_xm))):
+                                cnt += 1
+                                if cnt <= limit:
+                                    a = self.env['proves.citizen'].create({
+                                        'name' :  str(random.choice(names)),
+                                        'inteligence' : str(random.randint(1,7)),
+                                        'force' : str(random.randint(1,7)),
+                                        'ability' : str(random.randint(1,7)),
+                                        'inhabiting' : w.id,
+                                        'working': n.structure_id.id,
+                                    })
                 else:
                     n.perc_complete += 25
                     if n.perc_complete >= 100:
@@ -301,29 +303,28 @@ class world(models.Model):
                                 'force' : str(random.randint(1,7)),
                                 'ability' : str(random.randint(1,7)),
                                 'inhabiting' : w.id,
-                                'working': n.id,
+                                'working': n.structure_id.id,
                             })
-
 
             for at in w.attack_towers:
                 if at.completed:
-
-##Revisar el numero de trabajadores y el estado del edificio
-                    total_wk = 0
-                    for wk in at.workers:
-                        total_wk = sum(wk)
-
-                        at.production_xm = at.production_xm + wk.inteligence / at.inc_int
-                        at.production_xm = at.production_xm + wk.force / at.inc_frc
-                        at.production_xm = at.production_xm + wk.ability / at.inc_abt
+                    total_wk = len(at.workers)
 
                     if total_wk == 0:
                         at.kanban_state = 'blocked'
                     else:
                         at.kanban_state = 'producing'
+                        at.production_xm = 20
 
-                    if (at.damage + at.production_xm) <= at.max_damage:
-                        at.damage += at.production_xm
+                        for wk in at.workers:
+                            at.production_xm += (wk.inteligence / at.inc_int) + (wk.force / at.inc_frc) + (wk.ability / at.inc_abt)
+
+                        if at.damage < at.max_damage:
+                            limit = at.max_damage - at.damage
+                            if at.production_xm <= limit:
+                                at.damage += at.production_xm
+                            else:
+                                at.damage += at.production_xm - limit
                 else:
                     at.perc_complete += 25
                     if at.perc_complete >= 100:
@@ -332,35 +333,32 @@ class world(models.Model):
 
             for dd in w.defense_dome:
                 if dd.completed:
-
-                    total_wk = 0
-                    for wk in dd.workers:
-                        total_wk = sum(wk)
-
-                        dd.production_xm = dd.production_xm + wk.inteligence / dd.inc_int
-                        dd.production_xm = dd.production_xm + wk.force / dd.inc_frc
-                        dd.production_xm = dd.production_xm + wk.ability / dd.inc_abt
+                    total_wk = len(dd.workers)
 
                     if total_wk == 0:
                         dd.kanban_state = 'blocked'
                     else:
                         dd.kanban_state = 'producing'
+                        dd.production_xm = 20
 
-                    if (dd.buckler + dd.production_xm) <= dd.max_buckler:
-                        dd.buckler += dd.production_xm
+                        for wk in dd.workers:
+                            dd.production_xm += (wk.inteligence / dd.inc_int) + (wk.force / dd.inc_frc) + (wk.ability / dd.inc_abt)
+
+                        if dd.buckler < dd.max_buckler:
+                            limit = dd.max_buckler - dd.buckler
+                            if dd.production_xm <= limit:
+                                dd.buckler += dd.production_xm
+                            else:
+                                dd.buckler += dd.production_xm - limit
                 else:
                     dd.perc_complete += 25
                     if dd.perc_complete >= 100:
                         dd.completed = True
                         dd.kanban_state = 'blocked'
 
-            for r in w.residents:
-                r.life_expectacy -= random.randint(1, 6)
-                if r.life_expectacy <= 0:
-                    w.population -= 1
-                    r.working.production_xm
-                    r.unlink()
-
+            #Costes energeticos
+            for s in w.structures:
+                w.total_energy -= s.energy_tax
 
 
     @api.depends('image')
@@ -378,7 +376,7 @@ class world(models.Model):
     @api.multi
     def create_new_power_station(self):
         for w in self:
-            if w.structures < w.tiles and w.total_energy >= 40:
+            if w.num_structures < w.tiles and w.total_energy >= 40:
                 cost_x_ps = 40 / w.num_ps
                 for ps in w.power_stations:
                     ps.energy -= cost_x_ps
@@ -391,6 +389,7 @@ class world(models.Model):
                     'perc_complete': 0,
                     'lvl': 1,
                     'built_in': w.id,
+                    'energy_tax': 1,
                     'kanban_state':'start',
                     'image': ps_image.image,
                     'image_lvl': ps_image.image_lvl,
@@ -407,7 +406,7 @@ class world(models.Model):
                  "Gulgexo", "Golugrog", "Grith", "Zaisty", "Beera", "Adimha", "Krutundu"]
 
         for w in self:
-            if w.structures < w.tiles and w.total_energy >= 90:
+            if w.num_structures < w.tiles and w.total_energy >= 90:
                 cost_x_ps = 90 / w.num_ps
                 for ps in w.power_stations:
                     ps.energy = ps.energy - cost_x_ps
@@ -420,6 +419,7 @@ class world(models.Model):
                     'perc_complete': 0,
                     'lvl': 1,
                     'built_in': w.id,
+                    'energy_tax': 4,
                     'kanban_state': 'start',
                     'image': n_image.image,
                     'image_lvl': n_image.image_lvl,
@@ -432,7 +432,7 @@ class world(models.Model):
     @api.multi
     def create_new_defense_dome(self):
         for w in self:
-            if w.structures < w.tiles and w.total_energy >= 300:
+            if w.num_structures < w.tiles and w.total_energy >= 300:
 
                 cost_x_ps = 300 / w.num_ps
                 for ps in w.power_stations:
@@ -446,6 +446,7 @@ class world(models.Model):
                     'perc_complete': 0,
                     'lvl': 1,
                     'built_in': w.id,
+                    'energy_tax': 6,
                     'kanban_state':'start',
                     'image': dd_image.image,
                     'image_lvl': dd_image.image_lvl,
@@ -457,7 +458,7 @@ class world(models.Model):
     @api.multi
     def create_new_attack_tower(self):
         for w in self:
-            if w.structures < w.tiles and w.total_energy >= 350:
+            if w.num_structures < w.tiles and w.total_energy >= 350:
                 cost_x_ps = 350 / w.num_ps
                 for ps in w.power_stations:
                     ps.energy -= cost_x_ps
@@ -470,6 +471,7 @@ class world(models.Model):
                     'perc_complete': 0,
                     'lvl': 1,
                     'built_in': w.id,
+                    'energy_tax': 6,
                     'kanban_state':'start',
                     'image': ta_image.image,
                     'image_lvl': ta_image.image_lvl,
@@ -480,7 +482,7 @@ class world(models.Model):
 
 class battle(models.Model):
     _name = 'proves.battle'
-    name = fields.Char()
+    name = fields.Char(default='Battle')
     finished = fields.Boolean(default='False')
 
     attacker = fields.Many2one('res.partner', compute='_read_only')
@@ -569,8 +571,8 @@ class citizen(models.Model):
     force = fields.Integer()
     ability = fields.Integer()
 
-    inhabiting = fields.Many2one('proves.world', ondelete='cascade')
-    working = fields.Many2one('proves.structure', domain="[('built_in', '=', inhabiting)]", ondelete='cascade')
+    inhabiting = fields.Many2one('proves.world')
+    working = fields.Many2one('proves.structure', ondelete='cascade', domain="[('built_in', '=', inhabiting)]")
 
 class structure(models.Model):
     _name = 'proves.structure'
@@ -581,10 +583,12 @@ class structure(models.Model):
     completed = fields.Boolean(default=False)
     perc_complete = fields.Float('% Complete', (3, 2))
     lvl = fields.Integer()
+    resource = fields.Integer()
 
     built_in = fields.Many2one('proves.world', ondelete='cascade')
     workers = fields.One2many('proves.citizen', 'working')
     production_xm = fields.Float()
+    energy_tax = fields.Integer()
 
     image = fields.Binary()
     image_lvl = fields.Binary()
@@ -633,32 +637,51 @@ class power_station(models.Model):
             self.lvl = self.lvl + 1
             self.production_xm = 15
             self.max_energy = 600
+            self.energy_tax = 4
             self.inc_int = 2
             self.inc_frc = 3
             self.inc_abt = 6
-            self.built_in.create_resources()
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
         if self.lvl == 2:
             ps_image = self.env.ref('proves.power_station_lvl3')
             self.image_lvl = ps_image.image_lvl
             self.lvl = self.lvl + 1
             self.production_xm = 10
             self.max_energy = 300
+            self.energy_tax = 3
             self.inc_int = 3
             self.inc_frc = 4
             self.inc_abt = 7
-            self.built_in.create_resources()
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
         if self.lvl == 1:
             ps_image = self.env.ref('proves.power_station_lvl2')
             self.image_lvl = ps_image.image_lvl
             self.lvl = self.lvl + 1
             self.production_xm = 7
             self.max_energy = 175
+            self.energy_tax = 2
             self.inc_int = 4
             self.inc_frc = 5
             self.inc_abt = 8
-            self.built_in.create_resources()
-
-
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
 
 class attack_tower(models.Model):
     _name = 'attack_tower.structure'
@@ -675,30 +698,51 @@ class attack_tower(models.Model):
             self.lvl = self.lvl + 1
             self.production_xm = 50
             self.max_damage = 1500
+            self.energy_tax = 10
             self.inc_int = 2
             self.inc_frc = 3
             self.inc_abt = 3
-            self.built_in.create_resources()
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
         if self.lvl == 2:
             at_image = self.env.ref('proves.attack_tower_lvl3')
             self.image_lvl = at_image.image_lvl
             self.lvl = self.lvl + 1
             self.production_xm = 16
             self.max_damage = 800
+            self.energy_tax = 9
             self.inc_int = 3
             self.inc_frc = 4
             self.inc_abt = 4
-            self.built_in.create_resources()
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
         if self.lvl == 1:
             at_image = self.env.ref('proves.attack_tower_lvl2')
             self.image_lvl = at_image.image_lvl
             self.lvl = self.lvl + 1
             self.production_xm = 8
             self.max_damage = 600
+            self.energy_tax = 8
             self.inc_int = 4
             self.inc_frc = 5
             self.inc_abt = 5
-            self.built_in.create_resources()
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
 
 class defense_dome(models.Model):
     _name = 'defense_dome.structure'
@@ -715,35 +759,62 @@ class defense_dome(models.Model):
             self.lvl = self.lvl + 1
             self.production_xm = 50
             self.max_buckler = 1500
+            self.energy_tax = 8
             self.inc_int = 6
             self.inc_frc = 2
             self.inc_abt = 2
-            self.built_in.create_resources()
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
         if self.lvl == 2:
             dd_image = self.env.ref('proves.defense_dome_lvl3')
             self.image_lvl = dd_image.image_lvl
             self.lvl = self.lvl + 1
             self.production_xm = 16
             self.max_buckler = 800
+            self.energy_tax = 7
             self.inc_int = 7
             self.inc_frc = 3
             self.inc_abt = 3
-            self.built_in.create_resources()
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
         if self.lvl == 1:
             dd_image = self.env.ref('proves.defense_dome_lvl2')
             self.image_lvl = dd_image.image_lvl
             self.lvl = self.lvl + 1
             self.production_xm = 8
             self.max_buckler = 600
+            self.energy_tax = 6
             self.inc_int = 8
             self.inc_frc = 4
             self.inc_abt = 4
-            self.built_in.create_resources()
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
 
 class nursery(models.Model):
     _name = 'nursery.structure'
     _inherits = {'proves.structure':'structure_id'}
+    they_inhabit = fields.Integer(compute='_count_workers')
     capacity = fields.Integer(default=40)
+
+    @api.multi
+    def _count_workers(self):
+        for n in self:
+            n.they_inhabit = len(n.workers)
 
     @api.multi
     def up_lvl(self):
@@ -753,21 +824,51 @@ class nursery(models.Model):
             self.lvl = self.lvl + 1
             self.production_xm = 32
             self.capacity = 320
-            self.built_in.create_resources()
+            self.energy_tax = 7
+            self.inc_int = 7
+            self.inc_frc = 3
+            self.inc_abt = 2
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
         if self.lvl == 2:
             n_image = self.env.ref('proves.nursery_lvl3')
             self.image_lvl = n_image.image_lvl
             self.lvl = self.lvl + 1
             self.production_xm = 16
             self.capacity = 160
-            self.built_in.create_resources()
+            self.energy_tax = 6
+            self.inc_int = 7
+            self.inc_frc = 4
+            self.inc_abt = 3
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
         if self.lvl == 1:
             n_image = self.env.ref('proves.nursery_lvl2')
             self.image_lvl = n_image.image_lvl
             self.lvl = self.lvl + 1
             self.production_xm = 8
             self.capacity = 80
-            self.built_in.create_resources()
+            self.energy_tax = 5
+            self.inc_int = 8
+            self.inc_frc = 5
+            self.inc_abt = 4
+            self.completed = False
+            self.perc_complete = 0
+            self.kanban_state = 'start'
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
 
 class event(models.Model):
     _name = 'proves.event'

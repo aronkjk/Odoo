@@ -123,11 +123,17 @@
     <field name="arch" type="xml">
         <form>
             <sheet>
+                <field name="image_small" widget="image"/>
                 <field name="name"/>
-                <field name="workers" widget="many2many_tags"/>
+                <field name="built_in"/>
+                <field name="completed"/>
                 <group>
                     <field name="lvl"/>
+                    <field name="energy"/>
+                    <field name="name"/>
+                    <field name="workers" widget="many2many_tags"/>
                 </group>
+                <field name="image_lvl" widget="image"/>
             </sheet>
         </form>
     </field>
@@ -195,7 +201,7 @@
                                                           Energy
                                                           <field name="perc_energy" widget="progressbar"/>
                                                           Energy per minute:
-                                                          <field name="production_xm"/>
+                                                          <field name="energy_xm"/>
                                                       </th>
                                                       <th style="background-color:rgba(235, 127, 198, 30);">
                                                           Population
@@ -209,13 +215,13 @@
                                                           Power attack
                                                           <field name="perc_power_attack" widget="progressbar"/>
                                                           Power attack per minute:
-                                                          <field name="production_xm"/>
+                                                          <field name="power_attack_xm"/>
                                                       </th>
                                                       <th style="background-color:rgba(60, 159, 216, 30);">
                                                            Power defense
                                                           <field name="perc_power_defense" widget="progressbar"/>
                                                           Power defense per minute:
-                                                          <field name="production_xm"/>
+                                                          <field name="power_defense_xm"/>
                                                       </th>
                                                   </tr>
                                               </table>
@@ -352,7 +358,7 @@
 <field name="name"/>
 <field name="owner"/>
 <field name="lvl"/>
-<field name="structures"/>
+<field name="num_structures"/>
 <field name="population"/>
 <field name="space_pos"/>
   </tree>
@@ -374,11 +380,11 @@
                         </button>
                 <button name="player" type="action" class="oe_stat_button" icon="fa-gear">
                              <p>Total structures</p>
-                            <field name="structures"/>
+                            <field name="num_structures"/>
                         </button>
                 <button name="population" type="action" class="oe_stat_button" icon="fa-bug">
                              <p>Population</p>
-                            <field name="population"/>
+                            <div><field name="population"/>/<field name="max_population"/></div>
                         </button>
                 <group>
                   <group string="Planet">
@@ -441,71 +447,76 @@
                                                 <div class="oe_product_card  oe_kanban_global_click">
                                                     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
                                                     <tree>
-                                                        <h4  style=" margin-top: 45px;">
+                                                         <h4  style=" margin-top: 12px;">
                                                             <field name="name"/>
-                                                            <div   align="right" style="position: absolute; right: 0; top: 0; margin: 15px;">
-                                                                <field name="image_small" widget="image"/>
-                                                            </div>
                                                         </h4>
-                                                        <field name="kanban_state" widget="statusbar"/>
+                                                         <field name="perc_complete" widget="percentpie" string=" Progress" attrs="{'invisible':[('kanban_state','!=','start')]}"/>
                                                         <field name="perc_complete" widget="percentpie" string=" Progress" attrs="{'invisible':[('kanban_state','!=','start')]}"/>
-                                                        <field name="energy" widget="gauge" options="{'max_field': 'max_energy'}" attrs="{'invisible':[('kanban_state','=','start')]}"/>
-                                                        <div style="margin-bottom: 20px; margin-left:15px">
-                                                            Workers:
-                                                            <field name="workers"/>
-                                                        </div>
-                                                        <div  attrs="{'invisible':[('kanban_state','=','start')]}">
-                                                            Level:
-                                                            <field name="lvl"/>
-                                                            <field name="image_lvl_small" widget="image"/>
-                                                            Energy/minute:
-                                                            <field name="production_xm"/>
-                                                            <button name="up_lvl" type="object" align="right" icon="fa-arrow-up" style="
-                                                                display: inline-block;
-                                                                border-radius: 4px;
-                                                                background-color: #f4511e;
-                                                                border: none;
-                                                                color: #FFFFFF;
-                                                                text-align: center;
-                                                                font-size: 9px;
-                                                                padding: 5px;
-                                                                width: 50px;
-                                                                height: 50px;
-                                                                transition: all 0.5s;
-                                                                cursor: pointer;
-                                                                margin: 10px;
-                                                                position: absolute;
-                                                                right: 0;
-                                                                bottom: 0;
+                                                        <div style="margin-bottom:70px;">
+                                                            <div attrs="{'invisible':[('kanban_state','=','start')]}" style="width: 270px; margin-bottom: 10px;">
+                                                                <field name="energy" widget="gauge" options="{'max_field': 'max_energy'}"/>
+                                                                Energy/minute:
+                                                                <field name="production_xm" style="margin-left:10;"/>
+                                                                <div>
+                                                                    Workers:
+                                                                    <field name="workers"/>
+                                                                </div>
+
+                                                                <div style="margin: 10px; position: absolute; right: 0; top: 0;">
+                                                                    <field name="image_lvl_small" widget="image"/>
+                                                                </div>
+                                                            </div>
+                                                            <div style="position: absolute; right: 13px; bottom: 15px;">
+                                                                <div>
+                                                                    Level:
+                                                                    <field name="lvl"/>
+                                                                </div>
+                                                                <button name="up_lvl" attrs="{'invisible':['|',('lvl','=',4),('kanban_state','=','start')]}" type="object" align="right" icon="fa-arrow-up" style="
+                                                                    display: inline-block;
+                                                                    border-radius: 4px;
+                                                                    background-color: #f4511e;
+                                                                    border: none;
+                                                                    color: #FFFFFF;
+                                                                    text-align: center;
+                                                                    font-size: 9px;
+                                                                    padding: 5px;
+                                                                    width: 50px;
+                                                                    height: 50px;
+                                                                    transition: all 0.5s;
+                                                                    cursor: pointer;
 
 
-                                                                button span {
-                                                                cursor: pointer;
-                                                                display: inline-block;
-                                                                position: relative;
-                                                                transition: 0.5s;
-                                                                }
+                                                                    button span {
+                                                                    cursor: pointer;
+                                                                    display: inline-block;
+                                                                    position: relative;
+                                                                    transition: 0.5s;
+                                                                    }
 
-                                                                button span:after {
-                                                                content: '>>';
-                                                                position: absolute;
-                                                                opacity: 0;
-                                                                top: 0;
-                                                                right: -20px;
-                                                                transition: 0.5s;
-                                                                }
+                                                                    button span:after {
+                                                                    content: '>>';
+                                                                    position: absolute;
+                                                                    opacity: 0;
+                                                                    top: 0;
+                                                                    right: -20px;
+                                                                    transition: 0.5s;
+                                                                    }
 
-                                                                button:hover span {
-                                                                padding-right: 25px;
-                                                                }
+                                                                    button:hover span {
+                                                                    padding-right: 25px;
+                                                                    }
 
-                                                                button:hover span:after {
-                                                                opacity: 1;
-                                                                right: 0;
-                                                                }">
-                                                            <i class="material-icons">call_made</i>
-                                                            <p>Up level</p>
+                                                                    button:hover span:after {
+                                                                    opacity: 1;
+                                                                    right: 0;
+                                                                    }">
+                                                                <i class="material-icons">call_made</i>
+                                                                <p>Up level</p>
                                                             </button>
+                                                            </div>
+                                                        </div>
+                                                        <div style="position: absolute; left: 6px; bottom: 6px; width: 200px;">
+                                                            <field name="kanban_state" widget="statusbar"/>
                                                         </div>
                                                     </tree>
                                                 </div>
@@ -517,6 +528,9 @@
                             <page string="Sleeping Buildings">
                                 <button name="create_new_nursery" type="object" string="Create a Commune structure"
                                 class="oe_highlight"/>
+                                <div   align="right" style="position: absolute; right: 0; top: 0; margin: 15px;">
+                                    <field name="image_small" widget="image"/>
+                                </div>
                                 <field name="nursery">
                                     <kanban>
                                         <field name="name"/>
@@ -524,74 +538,72 @@
                                         <field name="capacity"/>
                                         <templates>
                                             <t t-name="kanban-box">
-                                                <div class="oe_product_card">
+                                                <div class="oe_product_card  oe_kanban_global_click">
                                                     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
                                                     <tree>
-                                                        <h4  style=" margin-top: 45px;">
+                                                        <h4  style=" margin-top: 12px;">
                                                             <field name="name"/>
-                                                            <div   align="right" style="position: absolute; right: 0; top: 0; margin: 15px;">
-                                                                <field name="image_small" widget="image"/>
-                                                            </div>
                                                         </h4>
-                                                        <field name="kanban_state" widget="statusbar"/>
                                                         <field name="perc_complete" widget="percentpie" string=" Progress" attrs="{'invisible':[('kanban_state','!=','start')]}"/>
-                                                        <field name="workers" widget="gauge" options="{'max_field': 'capacity'}" attrs="{'invisible':[('kanban_state','=','start')]}"/>
-                                                        <div style="margin-bottom: 20px; margin-left:15px">
-                                                            Workers:
-                                                            <field name="workers"/>
+                                                        <div style="margin-bottom:70px;">
+                                                            <div attrs="{'invisible':[('kanban_state','=','start')]}" style="width: 270px; margin-bottom: 10px;">
+                                                                <field name="they_inhabit" widget="gauge" options="{'max_field': 'capacity'}" />
+                                                                 Births/minute:
+                                                                <field name="production_xm" style="margin-left:10;"/>
+                                                                <div style="margin: 10px; position: absolute; right: 0; top: 0;">
+                                                                    <field name="image_lvl_small" widget="image"/>
+                                                                </div>
+                                                            </div>
+                                                            <div style="position: absolute; right: 13px; bottom: 15px;">
+                                                                <div>
+                                                                    Level:
+                                                                    <field name="lvl"/>
+                                                                </div>
+                                                                <button name="up_lvl" attrs="{'invisible':['|',('lvl','=',4),('kanban_state','=','start')]}" type="object" align="right" icon="fa-arrow-up" style="
+                                                                    display: inline-block;
+                                                                    border-radius: 4px;
+                                                                    background-color: #f4511e;
+                                                                    border: none;
+                                                                    color: #FFFFFF;
+                                                                    text-align: center;
+                                                                    font-size: 9px;
+                                                                    padding: 5px;
+                                                                    width: 50px;
+                                                                    height: 50px;
+                                                                    transition: all 0.5s;
+                                                                    cursor: pointer;
+                                                                    margin: 10;
+
+                                                                    button span {
+                                                                    cursor: pointer;
+                                                                    display: inline-block;
+                                                                    transition: 0.5s;
+                                                                    }
+
+                                                                    button span:after {
+                                                                    content: '>>';
+                                                                    position: absolute;
+                                                                    opacity: 0;
+                                                                    top: 0;
+                                                                    right: -20px;
+                                                                    transition: 0.5s;
+                                                                    }
+
+                                                                    button:hover span {
+                                                                    padding-right: 25px;
+                                                                    }
+
+                                                                    button:hover span:after {
+                                                                    opacity: 1;
+                                                                    right: 0;
+                                                                    }">
+                                                                <i class="material-icons">call_made</i>
+                                                                <p>Up level</p>
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                        <div  attrs="{'invisible':[('kanban_state','=','start')]}">
-                                                            Level:
-                                                            <field name="lvl"/>
-                                                            <field name="image_lvl_small" widget="image"/>
-                                                            Births/minute:
-                                                            <field name="production_xm"/>
-                                                            <button name="up_lvl" type="object" align="right" icon="fa-arrow-up" style="
-                                                                display: inline-block;
-                                                                border-radius: 4px;
-                                                                background-color: #f4511e;
-                                                                border: none;
-                                                                color: #FFFFFF;
-                                                                text-align: center;
-                                                                font-size: 9px;
-                                                                padding: 5px;
-                                                                width: 50px;
-                                                                height: 50px;
-                                                                transition: all 0.5s;
-                                                                cursor: pointer;
-                                                                margin: 10px;
-                                                                position: absolute;
-                                                                right: 0;
-                                                                bottom: 0;
-
-
-                                                                button span {
-                                                                cursor: pointer;
-                                                                display: inline-block;
-                                                                position: relative;
-                                                                transition: 0.5s;
-                                                                }
-
-                                                                button span:after {
-                                                                content: '>>';
-                                                                position: absolute;
-                                                                opacity: 0;
-                                                                top: 0;
-                                                                right: -20px;
-                                                                transition: 0.5s;
-                                                                }
-
-                                                                button:hover span {
-                                                                padding-right: 25px;
-                                                                }
-
-                                                                button:hover span:after {
-                                                                opacity: 1;
-                                                                right: 0;
-                                                                }">
-                                                            <i class="material-icons">call_made</i>
-                                                            <p>Up level</p>
-                                                            </button>
+                                                        <div style="position: absolute; left: 6px; bottom: 6px; width: 200px;">
+                                                            <field name="kanban_state" widget="statusbar"/>
                                                         </div>
                                                     </tree>
                                                 </div>
@@ -610,7 +622,7 @@
                                         <field name="max_buckler"/>
                                         <templates>
                                             <t t-name="kanban-box">
-                                                <div class="oe_product_card">
+                                                <div class="oe_product_card  oe_kanban_global_click">
                                                     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
                                                     <tree>
                                                         <h4  style=" margin-top: 45px;">
@@ -632,7 +644,7 @@
                                                             <field name="image_lvl_small" widget="image"/>
                                                             Buckler/minute:
                                                             <field name="production_xm"/>
-                                                            <button name="up_lvl" type="object" align="right" icon="fa-arrow-up" style="
+                                                            <button name="up_lvl" attrs="{'invisible':[('lvl','=',4)]}" type="object" align="right" icon="fa-arrow-up" style="
                                                                 display: inline-block;
                                                                 border-radius: 4px;
                                                                 background-color: #f4511e;
@@ -696,7 +708,7 @@
                                         <field name="max_damage"/>
                                         <templates>
                                             <t t-name="kanban-box">
-                                                <div class="oe_product_card">
+                                                <div class="oe_product_card  oe_kanban_global_click">
                                                     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
                                                     <tree>
                                                         <h4  style=" margin-top: 45px;">
@@ -718,7 +730,8 @@
                                                             <field name="image_lvl_small" widget="image"/>
                                                             Power Damage/minute:
                                                             <field name="production_xm"/>
-                                                            <button name="up_lvl" type="object" align="right" icon="fa-arrow-up" style="
+                                                            <div attrs="{'invisible':[('lvl','=','4')]}">
+                                                            <button name="up_lvl" attrs="{'invisible':[('lvl','=',4)]}" type="object" align="right" icon="fa-arrow-up"  style="
                                                                 display: inline-block;
                                                                 border-radius: 4px;
                                                                 background-color: #f4511e;
@@ -764,6 +777,7 @@
                                                             <i class="material-icons">call_made</i>
                                                             <p>Up level</p>
                                                             </button>
+                                                                </div>
                                                         </div>
                                                     </tree>
                                                 </div>
@@ -779,7 +793,7 @@
                                         <field name="id"/>
                                         <templates>
                                             <t t-name="kanban-box">
-                                                <div class="oe_product_card">
+                                                <div class="oe_product_card  oe_kanban_global_click">
                                                     <tree>
                                                         <h4>
                                                             <field name="name"/>
