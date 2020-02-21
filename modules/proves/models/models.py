@@ -22,9 +22,7 @@ class region_space(models.Model):
 class player(models.Model):
     _name = 'res.partner'
     _inherit = 'res.partner'
-    name = fields.Char(required=True)
-    image = fields.Binary()
-    image_small = fields.Binary(string='Image', compute='_get_images', store=True)
+    is_player = fields.Boolean(default=False)
 
     prestige = fields.Selection([('0', 'Very Low'), ('1', 'Low'), ('2', 'Normal Low'),
                             ('3', 'Normal'), ('4', 'Normal High'), ('5', 'High'),
@@ -110,7 +108,6 @@ class aliance(models.Model):
            image = i.image
            data = tools.image_get_resized_images(image)
            i.image_small = data["image_small"]
-
 
 class world(models.Model):
     _name = 'proves.world'
@@ -236,10 +233,11 @@ class world(models.Model):
 
             #Ciudadanos
             for r in w.residents:
+                r.years = datetime.now()
                 r.life_expectacy -= random.randint(1, 6)
                 if r.life_expectacy <= 0:
                     w.population -= 1
-                    #r.unlink()
+                    r.unlink()
 
             #Produccion
             for ps in w.power_stations:
@@ -303,7 +301,7 @@ class world(models.Model):
                                 'force' : str(random.randint(1,7)),
                                 'ability' : str(random.randint(1,7)),
                                 'inhabiting' : w.id,
-                                'working': n.structure_id.id,
+                                'working' : n.structure_id.id,
                             })
 
             for at in w.attack_towers:
@@ -485,73 +483,29 @@ class battle(models.Model):
     name = fields.Char(default='Battle')
     finished = fields.Boolean(default='False')
 
-    attacker = fields.Many2one('res.partner', compute='_read_only')
-    defender = fields.Many2one('res.partner', compute='_read_only')
+    attacker = fields.Many2one('res.partner')
+    defender = fields.Many2one('res.partner')
 
     attack = fields.Many2one('proves.world')
-    show_attack = fields.Many2one('proves.world', compute='_read_only')
     defend = fields.Many2one('proves.world')
 
-    att_pos = fields.Integer(compute='_read_only')
-    def_pos = fields.Integer(compute='_read_only')
-    distance = fields.Integer(compute='_read_only')
+    image_attack = fields.Binary(compute='_getImages')
+    image_defend = fields.Binary(compute='_getImages')
+
+    distance = fields.Integer()
     damage = fields.Integer()
 
-
-    def _get_start_date(self):
-        date = datetime.now()
-        return fields.Datetime.to_string(date)
-
-    start_date = fields.Datetime(default=_get_start_date)
-    end_date = fields.Datetime(compute='_get_end_date')
-
-    def _get_end_date(self):
-        for w in self:
-            pos_att = w.attack.space_pos
-            pos_def = w.defend.space_pos
-
-            space_diff = 0
-            if pos_att > pos_def:
-                space_diff = pos_att - pos_def
-            if pos_att < pos_def:
-                space_diff = pos_def - pos_att
-
-            date = w.start_date + timedelta(minutes=space_diff)
-
-            w.end_date = fields.Datetime.to_string(date)
+    start_date = fields.Datetime()
+    end_date = fields.Datetime()
 
     @api.multi
-    def _read_only(self):
-        for w in self:
-            w.show_attack = w.attack
-            w.attacker = w.attack.owner
-            w.defender = w.defend.owner
-            w.att_pos = w.attack.space_pos
-            w.def_pos = w.defend.space_pos
-            if w.att_pos < w.def_pos:
-                w.distance = w.def_pos - w.att_pos
-            if w.att_pos > w.def_pos:
-                w.distance = w.att_pos - w.def_pos
+    def _getImages(self):
+        for a in self.attack:
+            self.image_attack = a.image_small
+        for d in self.defend:
+            self.image_defend = d.image_small
 
-    @api.onchange('defend')
-    def onchange_attack(self):
-        self.defender = self.defend.owner
 
-        self.att_pos = self.attack.space_pos
-        self.def_pos = self.defend.space_pos
-
-        pos_att = self.attack.space_pos
-        pos_def = self.defend.space_pos
-
-        space_diff = 0
-        if pos_att > pos_def:
-            space_diff = pos_att - pos_def
-        if pos_att < pos_def:
-                space_diff = pos_def - pos_att
-
-        date = datetime.now() + timedelta(minutes=space_diff)
-        self.end_date = fields.Datetime.to_string(date)
-        self.distance = space_diff
 
     def compute_battle(self):
         date_now = datetime.now()
@@ -566,13 +520,26 @@ class citizen(models.Model):
     _name = 'proves.citizen'
     name = fields.Char()
     dead = fields.Boolean(default=False)
+    live = fields.Integer(default=100)
     life_expectacy = fields.Integer(default=90)
     inteligence = fields.Integer()
     force = fields.Integer()
     ability = fields.Integer()
 
+    def _get_date_now(self):
+        date = datetime.now()
+        return fields.Datetime.to_string(date)
+
+    birth_date = fields.Datetime(default=_get_date_now)
+    years = fields.Datetime(default=_get_date_now)
+
     inhabiting = fields.Many2one('proves.world')
-    working = fields.Many2one('proves.structure', ondelete='cascade', domain="[('built_in', '=', inhabiting)]")
+    working = fields.Many2one('proves.structure', ondelete='cascade', domain="[('built_in', '=', 'inhabiting')]")
+    register = fields.One2many('proves.history_citizens', 'registry')
+
+class history_cicizens(models.Model):
+    _name = 'proves.history_cicizens'
+    registry = fields.Many2one('proves.citizen')
 
 class structure(models.Model):
     _name = 'proves.structure'
@@ -620,7 +587,6 @@ class structure(models.Model):
             image = i.image_lvl
             data = tools.image_get_resized_images(image)
             i.image_lvl_small = data["image_small"]
-
 
 class power_station(models.Model):
     _name = 'power_station.structure'
@@ -882,4 +848,6 @@ class event(models.Model):
         ('attack', 'Battle'),
         ('exchange', 'Treatment'),
         ('union_petition', 'Request')])
+
+
 

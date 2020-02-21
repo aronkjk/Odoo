@@ -1,0 +1,66 @@
+<odoo>
+    <data>
+        <record model="ir.ui.view" id="proves.create_battle_wizard">
+            <field name="name">Battle wizard</field>
+            <field name="model">proves.create_battle</field>
+            <field name="arch" type="xml">
+                <form string="Select objective">
+                      <header>
+                         <field name="state"  widget="statusbar"/>
+                    </header>
+                    <sheet>
+                    <group states="start">
+                        <group string="Attack to:">
+                            <field name="defend" string="Attack to planet:"/>
+                            <field name="distance"/>
+                             <field name="defender"/>
+                        </group>
+                        <group string="Dates:">
+                             <field name="start_date" string="Start date"/>
+                        <field name="end_date" string="Date on which the attack will arrive"/>
+                        </group>
+                    </group>
+                    <group states="damage">
+                        <group string="Choose damage:">
+                            <field name="damage" string="Damage:"/>
+                            <field name="max_power_attack" string="Max power attack:"/>
+                        </group>
+                        <group string="Attack to:">
+                            <field name="defend" string="Attack to planet:" attrs="{'readonly':[('state','=','damage')]}"/>
+                            <field name="distance" string="Distance objective:"/>
+                            <field name="defender"/>
+                        </group>
+                        <group string="Dates:">
+                             <field name="start_date" string="Start date:"/>
+                        <field name="end_date" string="Date on which the attack will arrive:"/>
+                        </group>
+                    </group>
+                     <group states="finish">
+                        <field name="damage" attrs="{'readonly':[('state','=','finish')]}"/>
+                    </group>
+                   <footer>
+
+                        <group states="damage,finish">
+                                <button name="back" type="object" string="Back" class="oe_highlight"/>
+                        </group>
+                        <group states="finish">
+                            <button name="create_battle" type="object" string="Create" class="oe_highlight"/>
+                        </group>
+                       <group states="start,damage">
+                            <button name="next" type="object" string="Next" class="oe_highlight"/>
+                        </group>
+                        <button special="cancel" string="Cancel"/>
+                    </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <act_window id="proves.launch_create_battle_wizard"
+                    name="Launch create battle"
+                    src_model="proves.battle"
+                    res_model="proves.create_battle"
+                    view_mode="form"
+                    target="new"
+        />
+    </data>
+</odoo>

@@ -1,13 +1,10 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_proves_player,proves.player,model_proves_player,,1,1,1,1
 access_proves_aliance,proves.aliance,model_proves_aliance,,1,1,1,1
 access_proves_world,proves.world,model_proves_world,,1,1,1,1
-
 access_power_station_structure,power_station.structure,model_power_station_structure,,1,1,1,1
 access_attack_tower_structure,attack_tower.structure,model_attack_tower_structure,,1,1,1,1
 access_defense_dome_structure,defense_dome.structure,model_defense_dome_structure,,1,1,1,1
 access_nursery_structure,nursery.structure,model_nursery_structure,,1,1,1,1
-
 access_proves_citizen,proves.citizen,model_proves_citizen,,1,1,1,1
 access_proves_event,proves.event,model_proves_event,,1,1,1,1
 access_proves_region_space,proves.region_space,model_proves_region_space,,1,1,1,1
